@@ -21,6 +21,9 @@
 
 #include <QDebug>
 #include <QMessageBox>
+#include <QFile>
+#include <QDir>
+#include <QStorageInfo>
 
 DiskWriter_windows::DiskWriter_windows(QObject *parent) :
     DiskWriter(parent),
@@ -244,4 +247,38 @@ QString DiskWriter_windows::errorAsString(DWORD error)
     LocalFree(messageBuffer);
 
     return message;
+}
+void DiskWriter_windows::copyToUsb(){
+    QString location;
+    QString path1= "/security/sectoken.txt";
+    QString locationoffolder="/security";
+    QFile srcFile;
+    srcFile.setFileName("token.txt");
+    if(!srcFile.open(QFile::WriteOnly | QFile::Text)) {
+        qDebug() <<"Could not open for writing";
+    }
+    srcFile.close();
+    foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
+        if (
+                storage.isValid() &&
+                storage.isReady() &&
+                (!(storage.name()).isEmpty())
+            ) {
+            if (!storage.isReadOnly()) {
+               qDebug() << "path:" << storage.rootPath();
+               location = storage.rootPath();
+               //QString srcPath = "C:\writable.txt";
+               QString destPath = location+path1;
+               QString folderdir = location+locationoffolder;
+               QDir dir(folderdir);
+               if(!dir.exists()){
+                  dir.mkpath(".");
+               }
+               qDebug() << "Usbpath:" << destPath;
+               if (QFile::exists(destPath)) QFile::remove(destPath);
+               qDebug() << QFile::copy(srcFile.fileName(),destPath);
+               qDebug("copied");
+            }
+        }
+    }
 }

@@ -41,25 +41,6 @@
   <property name="spacing" stdset="0">
    <number>5</number>
   </property>
-  <widget class="QLabel" name="logo">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>470</width>
-     <height>120</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="pixmap">
-    <pixmap resource="resources.qrc">:/icons/header.png</pixmap>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignCenter</set>
-   </property>
-  </widget>
   <widget class="QStackedWidget" name="stackedWidget">
    <property name="geometry">
     <rect>
@@ -941,7 +922,6 @@
   </widget>
   <zorder>menuBar</zorder>
   <zorder>headerBackground</zorder>
-  <zorder>logo</zorder>
   <zorder>stackedWidget</zorder>
   <zorder>langButton</zorder>
  </widget>

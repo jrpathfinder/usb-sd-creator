@@ -110,6 +110,7 @@ void DiskWriter::writeGzCompressedImage(const QString &filename, const QString& 
     gzclose_r(src);
     this->sync();
     this->close();
+    this->copyToUsb();
 }
 
 void DiskWriter::writeUncompressedImage(const QString &filename, const QString& device)

@@ -59,6 +59,7 @@ protected:
     virtual void sync() = 0;
     virtual bool isOpen() = 0;
     virtual bool write(const QByteArray &data) = 0;
+    virtual void copyToUsb() =0;
 };
 
 #endif // DISKWRITER_H
