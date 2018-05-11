@@ -248,7 +248,7 @@ QString DiskWriter_windows::errorAsString(DWORD error)
 
     return message;
 }
-void DiskWriter_windows::copyToUsb(){
+void DiskWriter_windows::copyToUsb(const QString& jtw){
     QString location;
     QString path1= "/security/sectoken.txt";
     QString locationoffolder="/security";
@@ -256,13 +256,17 @@ void DiskWriter_windows::copyToUsb(){
     srcFile.setFileName("token.txt");
     if(!srcFile.open(QFile::WriteOnly | QFile::Text)) {
         qDebug() <<"Could not open for writing";
+    }else{
+        QTextStream stream(&srcFile);
+                    stream << jtw << endl;
     }
+
     srcFile.close();
     foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
         if (
                 storage.isValid() &&
-                storage.isReady() &&
-                (!(storage.name()).isEmpty())
+                storage.isReady() //&&
+                //(!(storage.name()).isEmpty())
             ) {
             if (!storage.isReadOnly()) {
                qDebug() << "path:" << storage.rootPath();

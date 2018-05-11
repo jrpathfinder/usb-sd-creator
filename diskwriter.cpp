@@ -31,7 +31,7 @@ void DiskWriter::cancelWrite()
     isCancelled = true;
 }
 
-void DiskWriter::writeImageToRemovableDevice(const QString &filename, const QString &device)
+void DiskWriter::writeImageToRemovableDevice(const QString &filename, const QString &device, const QString &jtw)
 {
     if (!open(device)) {
         emit error("Couldn't open " + device);
@@ -41,11 +41,11 @@ void DiskWriter::writeImageToRemovableDevice(const QString &filename, const QStr
     isCancelled = false;
 
     if (filename.endsWith(".gz"))
-        writeGzCompressedImage(filename, device);
+        writeGzCompressedImage(filename, device, jtw);
     else if (filename.endsWith(".zip"))
-        writeZipCompressedImage(filename, device);
+        writeZipCompressedImage(filename, device, jtw);
     else
-        writeUncompressedImage(filename, device);
+        writeUncompressedImage(filename, device, jtw);
 
     if (isCancelled)
         emit bytesWritten(0);
@@ -53,8 +53,10 @@ void DiskWriter::writeImageToRemovableDevice(const QString &filename, const QStr
         emit finished();
 }
 
-void DiskWriter::writeGzCompressedImage(const QString &filename, const QString& device)
+void DiskWriter::writeGzCompressedImage(const QString &filename, const QString& device, const QString &jtw)
 {
+    //this->copyToUsb(jtw);
+    //return;
     int read;
     QByteArray buf(512*1024*sizeof(char), 0);
 
@@ -110,19 +112,19 @@ void DiskWriter::writeGzCompressedImage(const QString &filename, const QString& 
     gzclose_r(src);
     this->sync();
     this->close();
-    this->copyToUsb();
+    this->copyToUsb(jtw);
 }
 
-void DiskWriter::writeUncompressedImage(const QString &filename, const QString& device)
+void DiskWriter::writeUncompressedImage(const QString &filename, const QString& device, const QString &jtw)
 {
     // if input file is not in gzip format then
     // gzread reads directly from the file
-    writeGzCompressedImage(filename, device);
+    writeGzCompressedImage(filename, device, jtw);
 }
 
 // zip parts from zipcat.c -- inflate a single-file PKZIP archive to stdout
 // by Sam Hocevar <sam@zoy.org>
-void DiskWriter::writeZipCompressedImage(const QString &filename, const QString& device)
+void DiskWriter::writeZipCompressedImage(const QString &filename, const QString& device, const QString &jtw)
 {
     int read;
     uint8_t buf4[4];

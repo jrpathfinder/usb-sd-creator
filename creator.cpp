@@ -27,6 +27,7 @@
 #include <QFileDialog>
 #include <iostream>
 #include <QUrl>
+#include <QUrlQuery>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QMessageBox>
@@ -54,6 +55,8 @@
 
 const QString Creator::releasesUrl = "http://releases.libreelec.tv/";
 const QString Creator::versionUrl = releasesUrl + "creator_version";
+const QString Creator::stokenUrl = "http://api.staging.finemine.com/v1/sessions";
+const QString Creator::releaseSofteamUrl = "http://checkmobile.online/";
 const QString Creator::helpUrl = "https://wiki.libreelec.tv/index.php?title=LibreELEC_USB-SD_Creator";
 const int Creator::timerValue = 1500;  // msec
 
@@ -90,8 +93,8 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
     diskWriter->moveToThread(diskWriterThread);
 
     // must set before signals
-    if (settings.value("preferred/imageshowall") == Qt::Checked)
-        ui->imagesShowAll->setChecked(true);  // default unchecked
+    //if (settings.value("preferred/imageshowall") == Qt::Checked)
+    //    ui->imagesShowAll->setChecked(true);  // default unchecked
 
     // hide ? button
     this->setWindowFlags(this->windowFlags() & ~(Qt::WindowContextHelpButtonHint));
@@ -100,8 +103,8 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
 
     connect(diskWriterThread, SIGNAL(finished()),
             diskWriter, SLOT(deleteLater()));
-    connect(this, SIGNAL(proceedToWriteImageToDevice(QString,QString)),
-            diskWriter, SLOT(writeImageToRemovableDevice(QString,QString)));
+    connect(this, SIGNAL(proceedToWriteImageToDevice(QString,QString, QString)),
+            diskWriter, SLOT(writeImageToRemovableDevice(QString,QString,QString)));
 
     connect(diskWriter, SIGNAL(bytesWritten(int)),this, SLOT(handleWriteProgress(int)));
     connect(diskWriter, SIGNAL(syncing()), this, SLOT(writingSyncing()));
@@ -128,12 +131,12 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
     connect(ui->writeFlashButton, SIGNAL(clicked()),
             this, SLOT(writeFlashButtonClicked()));
 
-    connect(ui->imagesShowAll, SIGNAL(stateChanged(int)),
-            this, SLOT(projectImagesShowAllChanged(int)));
-    connect(ui->projectSelectBox, SIGNAL(currentIndexChanged(int)),
-            this, SLOT(setProjectImages()));
-    connect(ui->imageSelectBox, SIGNAL(currentIndexChanged(QString)),
-            this, SLOT(projectImagesChanged(QString)));
+    //connect(ui->imagesShowAll, SIGNAL(stateChanged(int)),
+    //        this, SLOT(projectImagesShowAllChanged(int)));
+    //connect(ui->projectSelectBox, SIGNAL(currentIndexChanged(int)),
+    //        this, SLOT(setProjectImages()));
+    //connect(ui->imageSelectBox, SIGNAL(currentIndexChanged(QString)),
+    //        this, SLOT(projectImagesChanged(QString)));
 
     connect(ui->removableDevicesComboBox, SIGNAL(currentIndexChanged(int)),
             this, SLOT(savePreferredRemovableDevice(int)));
@@ -217,6 +220,7 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
     retranslateUi();  // retranslate dynamic texts
 
     downloadVersionCheck();
+    ui->stackedWidget->setEnabled(false);
 }
 
 bool Creator::showRootMessageBox()
@@ -330,10 +334,10 @@ void Creator::retranslateUi()
     );
 
     // orientation of the widget is reversed
-    if (QApplication::isLeftToRight())
-        ui->imagesShowAll->setLayoutDirection(Qt::RightToLeft);
-    else
-        ui->imagesShowAll->setLayoutDirection(Qt::LeftToRight);
+//    if (QApplication::isLeftToRight())
+//        ui->imagesShowAll->setLayoutDirection(Qt::RightToLeft);
+//    else
+//        ui->imagesShowAll->setLayoutDirection(Qt::LeftToRight);
 }
 
 void Creator::keyPressEvent(QKeyEvent *event)
@@ -353,6 +357,15 @@ void Creator::dragEnterEvent(QDragEnterEvent *event)
     if (event->mimeData()->hasUrls())
         event->acceptProposedAction();
 }
+void Creator::setAuthorized(bool val)
+{
+    authorized = val;
+}
+
+bool Creator::getAuthorized() const
+{
+    return authorized;
+}
 
 void Creator::dropEvent(QDropEvent *event)
 {
@@ -364,14 +377,14 @@ void Creator::dropEvent(QDropEvent *event)
         reset();
 
         // hide selected project and image name
-        ui->projectSelectBox->blockSignals(true);
-        ui->imageSelectBox->blockSignals(true);
+//        ui->projectSelectBox->blockSignals(true);
+//        ui->imageSelectBox->blockSignals(true);
 
-        ui->projectSelectBox->setCurrentIndex(-1);
-        ui->imageSelectBox->setCurrentIndex(-1);
+//        ui->projectSelectBox->setCurrentIndex(-1);
+//        ui->imageSelectBox->setCurrentIndex(-1);
 
-        ui->projectSelectBox->blockSignals(false);
-        ui->imageSelectBox->blockSignals(false);
+//        ui->projectSelectBox->blockSignals(false);
+//        ui->imageSelectBox->blockSignals(false);
 
         // and disable download button
         ui->downloadButton->setEnabled(false);
@@ -472,6 +485,7 @@ void Creator::downloadProgressBarText(const QString &text = "")
 void Creator::flashProgressBarText(const QString &text = "")
 {
     ui->flashProgressBar->setFormat("   " + text);
+    qDebug() << "FLASH:" << text;
     ui->flashProgressBar->repaint();
     ui->flashProgressBar->update();
     //qApp->processEvents();
@@ -489,7 +503,7 @@ void Creator::parseJsonAndSet(const QByteArray &data)
         fileLocalReleases.close();
     }
 
-    ui->projectSelectBox->clear();
+    //ui->projectSelectBox->clear();
 
     QList<JsonData> dataList = parserData->getJsonData();
     for (int ix = 0; ix < dataList.size(); ix++) {
@@ -500,8 +514,8 @@ void Creator::parseJsonAndSet(const QByteArray &data)
         QVariantMap projectData;
         projectData.insert("id", projectId);
         projectData.insert("url", projectUrl);
-        ui->projectSelectBox->insertItem(0, projectName, projectData);
-        ui->projectSelectBox->setItemData(0, projectId, Qt::ToolTipRole);
+       // ui->projectSelectBox->insertItem(0, projectName, projectData);
+       // ui->projectSelectBox->setItemData(0, projectId, Qt::ToolTipRole);
     }
 
     QString previouslySelectedProject;
@@ -511,39 +525,46 @@ void Creator::parseJsonAndSet(const QByteArray &data)
     if (previouslySelectedProject.isEmpty())
         previouslySelectedProject = "Raspberry Pi 2 and 3";
 
-    int idx = ui->projectSelectBox->findText(previouslySelectedProject,
-                                             Qt::MatchFixedString);
-    if (idx >= 0)
-        ui->projectSelectBox->setCurrentIndex(idx);
+    //int idx = ui->projectSelectBox->findText(previouslySelectedProject,
+      //                                       Qt::MatchFixedString);
+//    if (idx >= 0)
+//        ui->projectSelectBox->setCurrentIndex(idx);
 
-    settings.setValue("preferred/project", ui->projectSelectBox->currentText());
+    //settings.setValue("preferred/project", ui->projectSelectBox->currentText());
     setProjectImages();
     resetProgressBars();  // it is affected with all downloads
 }
 
+void Creator::parseJson(const QByteArray &data){
+    qDebug() << "JSON data:" << data;
+    parserData = new JsonParser(data,1);
+    QString jtwKey = parserData->getJTW();
+    qDebug() << "jtw" << jtwKey;
+    ui->jtwEdit->setText(jtwKey);
+}
 void Creator::setProjectImages()
 {
     downloadProgressBarText();
     //ui->fileNameLabel->setText("");
 
     // last selected is preferred
-    settings.setValue("preferred/project", ui->projectSelectBox->currentText());
+    //settings.setValue("preferred/project", ui->projectSelectBox->currentText());
 
     QString previouslySelectedImage;
-    if (ui->imageSelectBox->count() == 0)
-        previouslySelectedImage = settings.value("preferred/image").toString();
-    else
-        previouslySelectedImage = ui->imageSelectBox->currentText();
+//    if (ui->imageSelectBox->count() == 0)
+//        previouslySelectedImage = settings.value("preferred/image").toString();
+//    else
+//        previouslySelectedImage = ui->imageSelectBox->currentText();
 
-    ui->imageSelectBox->clear();
+   // ui->imageSelectBox->clear();
 
     QList<JsonData> dataList = parserData->getJsonData();
     for (int ix = 0; ix < dataList.size(); ix++) {
         QString projectName = dataList.at(ix).name;
 
         // show images only for selected project
-        if (projectName != ui->projectSelectBox->currentText())
-            continue;
+//        if (projectName != ui->projectSelectBox->currentText())
+//            continue;
 
         QList<QVariantMap> releases = dataList.at(ix).images;
         for (QList<QVariantMap>::const_iterator it = releases.constBegin();
@@ -579,30 +600,30 @@ void Creator::setProjectImages()
                     alphaBetaNumber = tr("[Beta]");
             }
 
-            if (! ui->imagesShowAll->isChecked()) {
-                // check value (number 90 or 95)
-                if (alphaBetaNumber != tr("[Stable]"))
-                  continue;    // skip testing images
-            }
+//            if (! ui->imagesShowAll->isChecked()) {
+//                // check value (number 90 or 95)
+//                if (alphaBetaNumber != tr("[Stable]"))
+//                  continue;    // skip testing images
+//            }
 
             checksumMap[imageName] = imageChecksum;
-            ui->imageSelectBox->insertItem(0, imageName + ", " + imageSize, imageName);
-            ui->imageSelectBox->setItemData(0, alphaBetaNumber + " " + releasesUrl + imageName, Qt::ToolTipRole);
+//            ui->imageSelectBox->insertItem(0, imageName + ", " + imageSize, imageName);
+//            ui->imageSelectBox->setItemData(0, alphaBetaNumber + " " + releasesUrl + imageName, Qt::ToolTipRole);
 
             // if we don't show all images we are already done
             // we are adding items in reverse order
-            // image with highest number already added
-            if (! ui->imagesShowAll->isChecked())
-                break;
+//            // image with highest number already added
+//            if (! ui->imagesShowAll->isChecked())
+//                break;
         }
     }
 
-    int idx = ui->imageSelectBox->findText(previouslySelectedImage,
-                                           Qt::MatchFixedString);
-    if (idx >= 0)
-        ui->imageSelectBox->setCurrentIndex(idx);
+//    int idx = ui->imageSelectBox->findText(previouslySelectedImage,
+//                                           Qt::MatchFixedString);
+//    if (idx >= 0)
+//        ui->imageSelectBox->setCurrentIndex(idx);
 
-    savePreferredImage(ui->imageSelectBox->currentText());
+//    savePreferredImage(ui->imageSelectBox->currentText());
 
     reset();
     downloadProgressBarText();
@@ -625,10 +646,10 @@ void Creator::projectImagesChanged(const QString& version)
     QString previouslySelectedProject;
     previouslySelectedProject = settings.value("preferred/project").toString();
 
-    int idx = ui->projectSelectBox->findText(previouslySelectedProject,
-                                             Qt::MatchFixedString);
-    if (idx >= 0)
-        ui->projectSelectBox->setCurrentIndex(idx);
+//    int idx = ui->projectSelectBox->findText(previouslySelectedProject,
+//                                             Qt::MatchFixedString);
+//    if (idx >= 0)
+//        ui->projectSelectBox->setCurrentIndex(idx);
 
 
 }
@@ -641,12 +662,12 @@ void Creator::reset(const QString& message)
     if (imageFile.isOpen())
         imageFile.close();
 
-    ui->imagesShowAll->setEnabled(true);
-    ui->projectSelectBox->blockSignals(false);
-    ui->projectSelectBox->setEnabled(true);
+//    ui->imagesShowAll->setEnabled(true);
+//    ui->projectSelectBox->blockSignals(false);
+//    ui->projectSelectBox->setEnabled(true);
 
-    ui->imageSelectBox->blockSignals(false);
-    ui->imageSelectBox->setEnabled(true);
+//    ui->imageSelectBox->blockSignals(false);
+//    ui->imageSelectBox->setEnabled(true);
 
     ui->downloadButton->setEnabled(true);
     ui->downloadButton->setText(tr("&Download"));
@@ -721,12 +742,12 @@ void Creator::languageChange()
 }
 
 void Creator::disableControls(const int which)
-{
+{/*
     ui->imagesShowAll->setEnabled(false);
     ui->projectSelectBox->setEnabled(false);
     ui->projectSelectBox->blockSignals(true);
     ui->imageSelectBox->setEnabled(false);
-    ui->imageSelectBox->blockSignals(true);
+    ui->imageSelectBox->blockSignals(true);*/
     ui->refreshRemovablesButton->setEnabled(false);
     ui->removableDevicesComboBox->setEnabled(false);
 
@@ -956,6 +977,12 @@ void Creator::handleDownloadError(const QString message)
 void Creator::handleFinishedDownload(const QByteArray &data)
 {
     switch (state) {
+    case STATE_AUTH_REQ:
+        parseJson(data);
+        Creator::setAuthorized(true);
+        ui->stackedWidget->setEnabled(true);
+        state = STATE_IDLE;
+        break;
     case STATE_GET_VERSION:
         state = STATE_IDLE;
 #ifdef FORCE_UPDATE_NOTIFICATION
@@ -1088,6 +1115,20 @@ void Creator::downloadVersionCheck()
     manager->get(url);
 }
 
+void Creator::authorizeCheck(const QString& username, const QString& password){
+    state = STATE_AUTH_REQ;
+    QUrl url(stokenUrl);
+    QUrlQuery query;
+     query.addQueryItem("email",username);
+     query.addQueryItem("password",password);
+
+    url.setQuery(query);
+
+    qDebug() << url;
+
+    manager->post(url);
+}
+
 void Creator::downloadReleases()
 {
     state = STATE_GET_RELEASES;
@@ -1153,15 +1194,19 @@ void Creator::downloadButtonClicked()
     state = STATE_DOWNLOADING_IMAGE;
     disableControls(DISABLE_CONTROL_DOWNLOAD);
 
-    QString imageName = ui->imageSelectBox->currentText();
-    selectedImage = imageName.section(',', 0, 0);   // remove size
+    //QString imageName = ui->imageSelectBox->currentText();
+    //selectedImage = imageName.section(',', 0, 0);   // remove size
+    //
+    selectedImage = "fmos-with-fat.img.zip";
     qDebug() << "selectedImage" << selectedImage;
 
-    QString projectUrl = ui->projectSelectBox->itemData(ui->projectSelectBox->currentIndex()).toMap()["url"].toString();
-    if (projectUrl == "")
-        projectUrl = releasesUrl;
+//    QString projectUrl = ui->projectSelectBox->itemData(ui->projectSelectBox->currentIndex()).toMap()["url"].toString();
+//    if (projectUrl == "")
+//        projectUrl = releasesUrl;
 
-    QUrl url = projectUrl + selectedImage;
+    QUrl url = "http://checkmobile.online/" + selectedImage;
+
+    //QUrl url = "https://mirror.yandex.ru/centos/7.4.1708/isos/x86_64/CentOS-7-x86_64-LiveGNOME-1708.iso";
 
     qDebug() << "Downloading" << url;
 
@@ -1198,7 +1243,7 @@ void Creator::downloadButtonClicked()
         }
     }
 
-    qDebug() << "Downloading to" << saveDir + " " + selectedImage;
+    qDebug() << "Downloading to" << saveDir + "/" + selectedImage;
 
     if (imageFile.isOpen())
         imageFile.close();
@@ -1270,14 +1315,14 @@ void Creator::getImageFileNameFromUser()
         ui->writeFlashButton->setEnabled(false);
 
     // hide selected project and image name
-    ui->projectSelectBox->blockSignals(true);
-    ui->imageSelectBox->blockSignals(true);
+//    ui->projectSelectBox->blockSignals(true);
+//    ui->imageSelectBox->blockSignals(true);
 
-    ui->projectSelectBox->setCurrentIndex(-1);
-    ui->imageSelectBox->setCurrentIndex(-1);
+//    ui->projectSelectBox->setCurrentIndex(-1);
+//    ui->imageSelectBox->setCurrentIndex(-1);
 
-    ui->projectSelectBox->blockSignals(false);
-    ui->imageSelectBox->blockSignals(false);
+//    ui->projectSelectBox->blockSignals(false);
+//    ui->imageSelectBox->blockSignals(false);
 
     // and disable download button
     ui->downloadButton->setEnabled(false);
@@ -1285,6 +1330,7 @@ void Creator::getImageFileNameFromUser()
 
 void Creator::writeFlashButtonClicked()
 {
+
     if (showRootMessageBox() == true)
       return;
 
@@ -1365,7 +1411,7 @@ void Creator::writeFlashButtonClicked()
     privileges.SetRoot();    // root need for opening a device
 
     ui->writeFlashButton->setText(tr("Cance&l"));
-    emit proceedToWriteImageToDevice(imageFile.fileName(), destination);
+    emit proceedToWriteImageToDevice(imageFile.fileName(), destination, ui->jtwEdit->text());
 
     speedTime.start();
     averageSpeed = new MovingAverage(20);
@@ -1508,3 +1554,13 @@ void Creator::handleWriteProgress(int written)
 
     speedTime.restart();   // start again to get current speed
 }
+
+void Creator::on_login_clicked()
+{
+    qDebug() << "Login to App before proceed";
+    qDebug() << ui->username->text() << ui->password->text();
+    if(!QString(ui->username->text()).isEmpty() && !QString(ui->password->text()).isEmpty()){
+        authorizeCheck(ui->username->text(), ui->password->text());
+    }
+}
+

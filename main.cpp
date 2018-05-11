@@ -34,7 +34,7 @@
 #include <QDebug>
 
 // show debug output always
-//#define ALWAYS_DEBUG_OUTPUT
+#define ALWAYS_DEBUG_OUTPUT
 
 #ifdef Q_OS_MAC
 class MacFontStyle : public QProxyStyle
@@ -101,9 +101,9 @@ int main(int argc, char *argv[])
     privileges.SetUser();
     privileges.Whoami();
 
-    Creator win(privileges, 0);
-    win.setArgFile(argFile);
-    win.show();
 
+    Creator win(privileges, 0);
+        win.setArgFile(argFile);
+        win.show();
     return app.exec();
 }

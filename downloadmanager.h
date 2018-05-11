@@ -21,6 +21,7 @@
 #define DOWNLOADMANAGER_H
 
 #include <QObject>
+#include <QNetworkReply>
 
 class QNetworkAccessManager;
 class QNetworkReply;
@@ -34,6 +35,7 @@ public:
     ~DownloadManager();
 
     QNetworkReply* get(const QUrl& url);
+    QNetworkReply* post(const QUrl& url);
 
 signals:
     void downloadComplete(const QByteArray&);
@@ -46,6 +48,7 @@ public slots:
 
 private slots:
     void handleProgress(qint64,qint64);
+    void slotError(QNetworkReply::NetworkError errorCode);
     void handleGetFinished(QNetworkReply*);
     void handleReadyRead();
 
@@ -55,6 +58,7 @@ private:
 
     enum {
         RESPONSE_OK = 200,
+        RESPONSE_201 = 201,
         RESPONSE_PARTIAL = 206,
         RESPONSE_FOUND = 302,
         RESPONSE_REDIRECT = 307,

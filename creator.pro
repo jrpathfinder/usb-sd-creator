@@ -170,6 +170,7 @@ linux* {
 }
 
 FORMS += creator.ui
+FORMS +=
 
 LIBS += -lz
 

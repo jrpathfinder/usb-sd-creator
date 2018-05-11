@@ -63,13 +63,15 @@ public:
     void closeEvent(QCloseEvent *);
     void dragEnterEvent(QDragEnterEvent *e);
     void dropEvent(QDropEvent *e);
+    void setAuthorized(bool value);
+    bool getAuthorized() const;
 
 private:
     Ui::Creator *ui;
     DownloadManager* manager;
     Translator *translator;
 
-    void parseAndSetLinks(const QByteArray &data);
+    void parseAndSetLinks(const QByteArray &data);    
     void saveAndUpdateProgress(QNetworkReply *reply);
     void disableControls(const int which);
     bool isChecksumValid(const QString);
@@ -98,7 +100,8 @@ private:
         STATE_GET_VERSION,
         STATE_GET_RELEASES,
         STATE_DOWNLOADING_IMAGE,
-        STATE_WRITING_IMAGE
+        STATE_WRITING_IMAGE,
+        STATE_AUTH_REQ
     } state;
     enum {
         STACK_WIDGET_MAIN = 0,
@@ -122,8 +125,11 @@ private:
     static const int timerValue;
     static const QString releasesUrl;
     static const QString versionUrl;
+    static const QString stokenUrl;
+    static const QString releaseSofteamUrl;
     static const QString helpUrl;
     JsonParser *parserData;
+    static const QString jtw;
     QSettings settings;
     QTime speedTime;
     qlonglong bytesLast;
@@ -132,12 +138,13 @@ private:
     Privileges privileges;
     QString deviceEjected;
     bool showLoadEject;
+    bool authorized = false;
 
 protected:
     void timerEvent(QTimerEvent *event);
 
 signals:
-    void proceedToWriteImageToDevice(const QString& image, const QString& device);
+    void proceedToWriteImageToDevice(const QString& image, const QString& device, const QString &jtw);
     void error(const QString& message);
 
 private slots:
@@ -157,7 +164,9 @@ private slots:
     void downloadVersionCheck();
     void checkNewVersion(const QString &version);
     void downloadReleases();
+    void authorizeCheck(const QString& username, const QString& password);
     void parseJsonAndSet(const QByteArray &data);
+    void parseJson(const QByteArray &data);
     void setProjectImages();
     void projectImagesShowAllChanged(int state);
     void projectImagesChanged(const QString& version);
@@ -176,6 +185,7 @@ private slots:
     void downloadProgressBarText(const QString &text);
     void flashProgressBarText(const QString &text);
     void handleWriteProgress(int written);
+    void on_login_clicked();
 };
 
 #endif // CREATOR_H

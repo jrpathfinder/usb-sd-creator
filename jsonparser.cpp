@@ -52,16 +52,45 @@ bool compareVersion(const QVariantMap &imageMap1, const QVariantMap &imageMap2)
         return true;
 }
 
+JsonParser::JsonParser(const QByteArray &data, int prs)
+{
+    parse(data);
+}
+
 JsonParser::JsonParser(const QByteArray &data)
 {
     parseAndSet(data, "");
 }
-
 void JsonParser::addExtra(const QByteArray &data, const QString label)
 {
     parseAndSet(data, label);
 }
-
+/**
+ * Authorization POST request's json parser:
+ * @brief JsonParser::parse
+ * @param data
+ */
+void JsonParser::parse(const QByteArray &data)
+{
+    qDebug() << "parse data:" << data;
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+    QJsonObject   jsonObject   = jsonDocument.object();
+    for (QJsonObject::Iterator item  = jsonObject.begin();
+                               item != jsonObject.end();
+                               item++)
+    {
+        QJsonObject userObject = item.value().toObject();
+        for (QJsonObject::Iterator its  = userObject.begin();
+                                   its != userObject.end();
+                                   its++)
+        {
+            if(its.key() == "jwt"){
+                qDebug() << "JTW" << its.value().toString();
+                jtw = its.value().toString();
+            }
+        }
+    }
+}
 void JsonParser::parseAndSet(const QByteArray &data, const QString label)
 {
     //qDebug() << "parseAndSet data:" << data;
@@ -158,4 +187,9 @@ void JsonParser::parseAndSet(const QByteArray &data, const QString label)
 QList<JsonData> JsonParser::getJsonData() const
 {
     return dataList;
+}
+
+QString JsonParser::getJTW() const
+{
+    return jtw;
 }

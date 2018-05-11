@@ -18,12 +18,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "downloadmanager.h"
-
+#include "creator.h"
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QUrl>
 #include <QDebug>
+#include <QTimer>
 
 DownloadManager::DownloadManager(QObject *parent) :
     QObject(parent),
@@ -39,11 +40,30 @@ DownloadManager::~DownloadManager()
     delete manager;
 }
 
-QNetworkReply* DownloadManager::get(const QUrl &url)
+/**
+ * POST
+ * @brief DownloadManager::post
+ * @param url
+ * @return
+ */
+QNetworkReply* DownloadManager::post(const QUrl &url )
 {
     QNetworkRequest req(url);
     req.setRawHeader("User-Agent", "Wget/1.14 (linux-gnu)");
     req.setRawHeader("Connection", "keep-alive");
+    req.setRawHeader("Content-Type", "application/x-www-form-urlencoded");
+    qDebug() << "Posting URL:" << url;
+    QByteArray postData;
+    latestReply = manager->post(req, postData);
+    return latestReply;
+}
+
+QNetworkReply* DownloadManager::get(const QUrl &url)
+{    
+    QNetworkRequest req(url);
+    req.setRawHeader("User-Agent", "Wget/1.14 (linux-gnu)");
+    req.setRawHeader("Connection", "keep-alive");
+    req.setRawHeader("Keep-Alive","600000");
     qDebug() << "Getting" << url;
 
     latestReply = manager->get(req);
@@ -51,7 +71,41 @@ QNetworkReply* DownloadManager::get(const QUrl &url)
     latestReply->ignoreSslErrors();
 #endif
 
-    connect(latestReply, SIGNAL(downloadProgress(qint64,qint64)), SLOT(handleProgress(qint64,qint64)));
+    connect(latestReply, SIGNAL(downloadProgress(qint64,qint64)),
+            SLOT(handleProgress(qint64,qint64)));
+    connect(latestReply, SIGNAL(error(QNetworkReply::NetworkError)), this,
+            SLOT(slotError(QNetworkReply::NetworkError)));
+
+    /*QTimer timer;
+    timer.setSingleShot(true);
+
+    QEventLoop loop;
+    connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
+    connect(latestReply, SIGNAL(finished()), &loop, SLOT(quit()));
+    timer.start(300000);   // 30 secs. timeout
+    loop.exec();
+
+    if(timer.isActive()) {
+        timer.stop();
+        if(latestReply->error() > 0) {
+           // handle error
+        }
+        else {
+          int v = latestReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+          if (v >= 200 && v < 300) {  // Success
+            //
+          }
+        }
+    } else {
+       // timeout
+       disconnect(latestReply, SIGNAL(finished()), &loop, SLOT(quit()));
+
+       latestReply->abort();
+    }
+    */
+
+
     return latestReply;
 }
 
@@ -64,6 +118,10 @@ void DownloadManager::cancelDownload()
 void DownloadManager::handleProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
     emit downloadProgress(bytesReceived, bytesTotal);
+}
+void DownloadManager::slotError(QNetworkReply::NetworkError errorCode) /* handle error */
+{
+    qDebug()<<"error:"<<errorCode;
 }
 
 void DownloadManager::handleGetFinished(QNetworkReply *reply)
@@ -95,6 +153,14 @@ void DownloadManager::handleGetFinished(QNetworkReply *reply)
 
         case RESPONSE_OK:
             qDebug() << "Downloaded" << reply->header(QNetworkRequest::ContentLengthHeader).toLongLong() << "bytes from" << reply->url().toString();
+            emit downloadComplete(reply->readAll());
+            break;
+
+        case RESPONSE_201:
+            qDebug() << "Downloaded"
+                     << reply->header(QNetworkRequest::ContentLengthHeader).toLongLong()
+                     << "bytes from"
+                     << reply->url().toString();
             emit downloadComplete(reply->readAll());
             break;
 

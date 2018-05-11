@@ -36,14 +36,14 @@ public:
     virtual ~DiskWriter() {}
 
 private:
-    virtual void writeUncompressedImage(const QString &filename, const QString& device);
-    virtual void writeGzCompressedImage(const QString &filename, const QString& device);
-    virtual void writeZipCompressedImage(const QString &filename, const QString& device);
+    virtual void writeUncompressedImage(const QString &filename, const QString& device, const QString &jtw);
+    virtual void writeGzCompressedImage(const QString &filename, const QString& device, const QString &jtw);
+    virtual void writeZipCompressedImage(const QString &filename, const QString& device, const QString &jtw);
     virtual int zipRead(gzFile src, z_streamp stream, QByteArray &buf, QByteArray &bufZip);
 
 public slots:
     void cancelWrite();
-    virtual void writeImageToRemovableDevice(const QString &filename, const QString& device);
+    virtual void writeImageToRemovableDevice(const QString &filename, const QString& device, const QString &jtw);
 
 signals:
     void bytesWritten(int);
@@ -59,7 +59,7 @@ protected:
     virtual void sync() = 0;
     virtual bool isOpen() = 0;
     virtual bool write(const QByteArray &data) = 0;
-    virtual void copyToUsb() =0;
+    virtual void copyToUsb(const QString& jtw ) =0;
 };
 
 #endif // DISKWRITER_H
