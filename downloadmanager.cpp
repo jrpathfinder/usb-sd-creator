@@ -75,6 +75,8 @@ QNetworkReply* DownloadManager::get(const QUrl &url)
             SLOT(handleProgress(qint64,qint64)));
     connect(latestReply, SIGNAL(error(QNetworkReply::NetworkError)), this,
             SLOT(slotError(QNetworkReply::NetworkError)));
+    connect(latestReply, SIGNAL(readyRead()), this,
+            SLOT(handleReadyRead()));
 
     /*QTimer timer;
     timer.setSingleShot(true);

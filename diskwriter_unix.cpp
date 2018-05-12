@@ -21,6 +21,7 @@
 
 #include <QDebug>
 #include <unistd.h>
+#include <QStorageInfo>
 
 #ifdef Q_OS_MAC
 #include <QProcess>
@@ -78,4 +79,53 @@ bool DiskWriter_unix::write(const QByteArray &data)
 {
     return dev.write(data);
 }
+/**
+ * Copy security token to USB Flash drive after image file have burnt
+ * @brief DiskWriter_unix::copyToUsb
+ * @param jtw
+ */
+void DiskWriter_unix::copyToUsb(const QString& jtw){
+    // Mounted volume root path
+    QString storageRootPath;
+    // Where to copy security token
+    QString securityTokenLocation= "/security/sectoken.txt";
+    QString securityDirectory="/security";
+    // write sec token to temp local security file
+    QFile srcFile;
+          srcFile.setFileName("tmp_token.txt");
+          if(!srcFile.open(QFile::WriteOnly | QFile::Text)) {
+             qDebug() <<"Could not open for writing";
+          }else{
+             QTextStream stream(&srcFile);
+                    stream << jtw << endl;
+          }
+          srcFile.close();
+    //Iterate over available mounted volumes:
+    foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
+        qDebug()<<"Storage Root Path" << storage.rootPath();
+        if (
+                storage.isValid()
+                &&
+                storage.isReady()
+            ) {
+
+            if (!storage.isReadOnly()) {
+
+               storageRootPath = storage.rootPath();
+               //Destination file to copy the token
+               QString destPath  = storageRootPath+securityTokenLocation;
+               QString securityFolder = storageRootPath+securityDirectory;
+               QDir dir(securityFolder);
+               if(!dir.exists()){
+                  dir.mkpath(".");
+               }
+               qDebug() << "Copy to USB Path:" << destPath;
+               if (QFile::exists(destPath)) QFile::remove(destPath);
+               qDebug() << QFile::copy(srcFile.fileName(),destPath);
+               qDebug("copied");
+            }
+        }
+    }
+}
+
 

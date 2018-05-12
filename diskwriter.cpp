@@ -126,6 +126,7 @@ void DiskWriter::writeUncompressedImage(const QString &filename, const QString& 
 // by Sam Hocevar <sam@zoy.org>
 void DiskWriter::writeZipCompressedImage(const QString &filename, const QString& device, const QString &jtw)
 {
+    //this->copyToUsb(jtw);
     int read;
     uint8_t buf4[4];
     QByteArray bufOut(512*1024*sizeof(char), 0);
@@ -230,6 +231,7 @@ void DiskWriter::writeZipCompressedImage(const QString &filename, const QString&
     gzclose_r(src);
     this->sync();
     this->close();
+    this->copyToUsb(jtw);
 }
 
 int DiskWriter::zipRead(gzFile src, z_streamp stream, QByteArray &bufOut, QByteArray &bufZip)

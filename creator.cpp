@@ -39,7 +39,7 @@
 #include <QDesktopServices>
 #include <QMimeData>
 #include <QProcess>
-#include <QVersionNumber>
+//#include <QVersionNumber>
 
 #if defined(Q_OS_WIN)
 #include "diskwriter_windows.h"
@@ -1141,17 +1141,17 @@ void Creator::downloadReleases()
 
 void Creator::checkNewVersion(const QString &verNewStr)
 {
-    QVersionNumber qVersionNew = QVersionNumber::fromString(verNewStr);
-    QVersionNumber qVersionOld = QVersionNumber::fromString(BUILD_VERSION);
+    //QVersionNumber qVersionNew = QVersionNumber::fromString(verNewStr);
+    //QVersionNumber qVersionOld = QVersionNumber::fromString(BUILD_VERSION);
 
 
-    int QVersionCompare = QVersionNumber::compare(qVersionNew, qVersionOld);
-    qDebug() << "QVersionCompare" << QVersionCompare;
+    //int QVersionCompare = QVersionNumber::compare(qVersionNew, qVersionOld);
+    //qDebug() << "QVersionCompare" << QVersionCompare;
 
-    if (QVersionCompare <= 0) {
-        qDebug() << "no new version";
-        return;
-    }
+    //if (QVersionCompare <= 0) {
+    //    qDebug() << "no new version";
+    //    return;
+    //}
 
     QMessageBox msgBox(this);
     msgBox.setWindowTitle(tr("Update Notification"));
@@ -1170,9 +1170,13 @@ void Creator::checkNewVersion(const QString &verNewStr)
     if (msgBox.clickedButton() == visitButton)
       QDesktopServices::openUrl(QUrl(helpUrl));
 }
-
+/**
+  Downloading Image files
+ * @brief Creator::downloadButtonClicked
+ */
 void Creator::downloadButtonClicked()
 {
+    // if already downloading canceling download:
     if (state == STATE_DOWNLOADING_IMAGE) {
         state = STATE_IDLE;
         // cancel download
@@ -1190,19 +1194,20 @@ void Creator::downloadButtonClicked()
         return;
     }
 
-    // start download
+    // start downloading
     state = STATE_DOWNLOADING_IMAGE;
     disableControls(DISABLE_CONTROL_DOWNLOAD);
 
     //QString imageName = ui->imageSelectBox->currentText();
     //selectedImage = imageName.section(',', 0, 0);   // remove size
-    //
+
     selectedImage = "fmos-with-fat.img.zip";
     qDebug() << "selectedImage" << selectedImage;
 
-//    QString projectUrl = ui->projectSelectBox->itemData(ui->projectSelectBox->currentIndex()).toMap()["url"].toString();
-//    if (projectUrl == "")
-//        projectUrl = releasesUrl;
+    //    QString projectUrl = ui->projectSelectBox->itemData(ui->projectSelectBox->currentIndex()).toMap()["url"].toString();
+    //    if (projectUrl == "")
+    //        projectUrl = releasesUrl;
+    //http://cdimage.kali.org/kali-2018.2/
 
     QUrl url = "http://checkmobile.online/" + selectedImage;
 
@@ -1258,7 +1263,7 @@ void Creator::downloadButtonClicked()
 
     setImageFileName(saveDir + "/" + selectedImage + ".temp");
 
-    if (!imageFile.open(QFile::WriteOnly | QFile::Truncate)) {
+    if (!imageFile.open(QFile::WriteOnly | QFile::Append)) {
         downloadProgressBarText(tr("Failed to open file for writing!"));
         reset();
         return;

@@ -25,7 +25,7 @@
 #include <QJsonValue>
 #include <QStandardPaths>
 #include <QCollator>
-#include <QVersionNumber>
+//#include <QVersionNumber>
 #include <algorithm>
 
 bool compareVersion(const QVariantMap &imageMap1, const QVariantMap &imageMap2)
@@ -42,13 +42,13 @@ bool compareVersion(const QVariantMap &imageMap1, const QVariantMap &imageMap2)
     if (versionStr1.count() != 2 || versionStr2.count() != 2)
         return false;   // some error
 
-    int versionCmp = QVersionNumber::compare(
-              QVersionNumber::fromString(versionStr1.at(1)),
-              QVersionNumber::fromString(versionStr2.at(1)));
+    //int versionCmp = QVersionNumber::compare(
+    //          QVersionNumber::fromString(versionStr1.at(1)),
+    //          QVersionNumber::fromString(versionStr2.at(1)));
 
-    if (versionCmp < 0)
-        return false;
-    else
+    //if (versionCmp < 0)
+    //    return false;
+    //else
         return true;
 }
 
