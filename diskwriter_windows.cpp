@@ -250,8 +250,8 @@ QString DiskWriter_windows::errorAsString(DWORD error)
 }
 void DiskWriter_windows::copyToUsb(const QString& jtw){
     QString location;
-    QString path1= "/security/sectoken.txt";
-    QString locationoffolder="/security";
+    QString path1= "fmos_token.txt";
+    //QString locationoffolder="/security";
     QFile srcFile;
     srcFile.setFileName("token.txt");
     if(!srcFile.open(QFile::WriteOnly | QFile::Text)) {
@@ -265,19 +265,19 @@ void DiskWriter_windows::copyToUsb(const QString& jtw){
     foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
         if (
                 storage.isValid() &&
-                storage.isReady() //&&
-                //(!(storage.name()).isEmpty())
+                storage.isReady() &&
+                (!(storage.name()).isEmpty()) &&
+                storage.name() == "FDP"
             ) {
             if (!storage.isReadOnly()) {
                qDebug() << "path:" << storage.rootPath();
                location = storage.rootPath();
-               //QString srcPath = "C:\writable.txt";
                QString destPath = location+path1;
-               QString folderdir = location+locationoffolder;
-               QDir dir(folderdir);
-               if(!dir.exists()){
-                  dir.mkpath(".");
-               }
+               //QString folderdir = location+locationoffolder;
+               //QDir dir(folderdir);
+               //if(!dir.exists()){
+               //   dir.mkpath(".");
+               // }
                qDebug() << "Usbpath:" << destPath;
                if (QFile::exists(destPath)) QFile::remove(destPath);
                qDebug() << QFile::copy(srcFile.fileName(),destPath);
