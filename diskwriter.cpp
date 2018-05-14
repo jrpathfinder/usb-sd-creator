@@ -161,7 +161,7 @@ void DiskWriter::writeZipCompressedImage(const QString &filename, const QString&
 
     // https://en.wikipedia.org/wiki/Zip_(file_format)
     // go to start of first file
-    gzseek(src, 18, SEEK_CUR);
+    gzseek(src, 22, SEEK_CUR);
 
     read = gzread(src, buf4, 2); // Uncompressed size
     if (read <= 0) {
