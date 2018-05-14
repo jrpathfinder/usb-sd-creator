@@ -1201,7 +1201,8 @@ void Creator::downloadButtonClicked()
     //QString imageName = ui->imageSelectBox->currentText();
     //selectedImage = imageName.section(',', 0, 0);   // remove size
 
-    selectedImage = "fmos-with-fat.img.zip";
+    // http://checkmobile.online/
+    selectedImage = "fmos-0.8.img.gz";
     qDebug() << "selectedImage" << selectedImage;
 
     //    QString projectUrl = ui->projectSelectBox->itemData(ui->projectSelectBox->currentIndex()).toMap()["url"].toString();
