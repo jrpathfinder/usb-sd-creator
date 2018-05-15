@@ -22,6 +22,7 @@
 #include <QDebug>
 #include <unistd.h>
 #include <QStorageInfo>
+#include <QProcess>
 
 #ifdef Q_OS_MAC
 #include <QProcess>
@@ -84,11 +85,18 @@ bool DiskWriter_unix::write(const QByteArray &data)
  * @brief DiskWriter_unix::copyToUsb
  * @param jtw
  */
-void DiskWriter_unix::copyToUsb(const QString& jtw){
+void DiskWriter_unix::copyToUsb(const QString& device, const QString& jtw){
+
+    QProcess cmd;
+    cmd.start("mount "+device+"1 /media/FDP", QIODevice::ReadWrite);
+    cmd.waitForStarted();
+    cmd.waitForFinished();
+    qDebug() << "mounted";
+
     // Mounted volume root path
     QString storageRootPath;
     // Where to copy security token
-    QString securityTokenLocation= "/security/sectoken.txt";
+    QString securityTokenLocation= "/fmos_token.txt";
     QString securityDirectory="/security";
     // write sec token to temp local security file
     QFile srcFile;
@@ -107,6 +115,10 @@ void DiskWriter_unix::copyToUsb(const QString& jtw){
                 storage.isValid()
                 &&
                 storage.isReady()
+                &&
+                (!storage.name().isEmpty())
+                &&
+                storage.name() == "FDP"
             ) {
 
             if (!storage.isReadOnly()) {
@@ -114,11 +126,11 @@ void DiskWriter_unix::copyToUsb(const QString& jtw){
                storageRootPath = storage.rootPath();
                //Destination file to copy the token
                QString destPath  = storageRootPath+securityTokenLocation;
-               QString securityFolder = storageRootPath+securityDirectory;
-               QDir dir(securityFolder);
-               if(!dir.exists()){
-                  dir.mkpath(".");
-               }
+               //QString securityFolder = storageRootPath+securityDirectory;
+               //QDir dir(securityFolder);
+               //if(!dir.exists()){
+               //   dir.mkpath(".");
+               //}
                qDebug() << "Copy to USB Path:" << destPath;
                if (QFile::exists(destPath)) QFile::remove(destPath);
                qDebug() << QFile::copy(srcFile.fileName(),destPath);

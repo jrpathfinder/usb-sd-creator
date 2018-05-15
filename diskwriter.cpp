@@ -33,6 +33,8 @@ void DiskWriter::cancelWrite()
 
 void DiskWriter::writeImageToRemovableDevice(const QString &filename, const QString &device, const QString &jtw)
 {
+
+
     if (!open(device)) {
         emit error("Couldn't open " + device);
         return;
@@ -112,7 +114,8 @@ void DiskWriter::writeGzCompressedImage(const QString &filename, const QString& 
     gzclose_r(src);
     this->sync();
     this->close();
-    this->copyToUsb(jtw);
+    qDebug()<< "device: " << device;
+    this->copyToUsb(device, jtw);
 }
 
 void DiskWriter::writeUncompressedImage(const QString &filename, const QString& device, const QString &jtw)
@@ -231,7 +234,7 @@ void DiskWriter::writeZipCompressedImage(const QString &filename, const QString&
     gzclose_r(src);
     this->sync();
     this->close();
-    this->copyToUsb(jtw);
+    this->copyToUsb(device, jtw);
 }
 
 int DiskWriter::zipRead(gzFile src, z_streamp stream, QByteArray &bufOut, QByteArray &bufZip)

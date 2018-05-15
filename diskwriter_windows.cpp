@@ -248,7 +248,7 @@ QString DiskWriter_windows::errorAsString(DWORD error)
 
     return message;
 }
-void DiskWriter_windows::copyToUsb(const QString& jtw){
+void DiskWriter_windows::copyToUsb(const QString& device, const QString& jtw){
     QString location;
     QString path1= "fmos_token.txt";
     //QString locationoffolder="/security";
@@ -278,7 +278,7 @@ void DiskWriter_windows::copyToUsb(const QString& jtw){
                //if(!dir.exists()){
                //   dir.mkpath(".");
                // }
-               qDebug() << "Usbpath:" << destPath;
+               qDebug() << "USB Path:" << destPath;
                if (QFile::exists(destPath)) QFile::remove(destPath);
                qDebug() << QFile::copy(srcFile.fileName(),destPath);
                qDebug("copied");

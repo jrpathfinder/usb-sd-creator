@@ -42,7 +42,7 @@ private:
     void sync();
     bool isOpen();
     bool write(const QByteArray &data);
-    void copyToUsb(const QString& jtw);
+    void copyToUsb(const QString & device, const QString& jtw);
 
     HANDLE hVolume;
     HANDLE hRawDisk;

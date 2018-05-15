@@ -50,6 +50,7 @@ private:
     QStringList getPartitionsInfo(const QString &device) const;
     QString getFirstPartitionLabel(const QString& device) const;
     bool unmount(const QString& what) const;
+    bool mount(const QString& what, const QString & where ) const;
 #endif
 };
 

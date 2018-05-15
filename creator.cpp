@@ -765,6 +765,7 @@ bool Creator::isChecksumValid(const QString checksumSha256)
 {
     checksum = checksumMap[selectedImage];
 
+    qDebug() << "sha256" << checksumSha256;
     if (checksumSha256.isFilled() && checksumSha256 == checksum)
         return true;  // checksum calculated at download stage
 
@@ -775,6 +776,7 @@ bool Creator::isChecksumValid(const QString checksumSha256)
     imageFile.open(QFile::ReadOnly);
     while (!imageFile.atEnd())
         c.addData(imageFile.read(4096));
+
 
     downloadSum = c.result().toHex();
 
@@ -1337,6 +1339,7 @@ void Creator::getImageFileNameFromUser()
 void Creator::writeFlashButtonClicked()
 {
 
+    //this->devEnumerator->getUserFriendlyNames();
     if (showRootMessageBox() == true)
       return;
 
@@ -1418,6 +1421,8 @@ void Creator::writeFlashButtonClicked()
 
     ui->writeFlashButton->setText(tr("Cance&l"));
     emit proceedToWriteImageToDevice(imageFile.fileName(), destination, ui->jtwEdit->text());
+
+
 
     speedTime.start();
     averageSpeed = new MovingAverage(20);

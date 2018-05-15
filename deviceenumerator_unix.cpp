@@ -438,6 +438,29 @@ QString DeviceEnumerator_unix::getFirstPartitionLabel(const QString& device) con
     return qLabel;
 }
 
+/**
+ * Mount device function
+ * @brief DeviceEnumerator_unix::mount
+ * @param what
+ * @return
+ */
+bool DeviceEnumerator_unix::mount(const QString& what, const QString& where ) const
+{
+    QProcess cmd;
+    cmd.start("mount "+what +" " +where, QIODevice::ReadWrite);
+    cmd.waitForStarted();
+    cmd.waitForFinished();
+
+    qDebug() << "mount: checking" << what;
+    if (checkIsMounted(what) == true) {
+        qDebug() << "mount: correct";
+        return true; // still mounted
+    }
+
+    qDebug() << "mount: failed";
+    return false;
+}
+
 bool DeviceEnumerator_unix::unmount(const QString& what) const
 {
     QProcess cmd;
