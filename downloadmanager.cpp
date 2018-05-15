@@ -78,36 +78,6 @@ QNetworkReply* DownloadManager::get(const QUrl &url)
     connect(latestReply, SIGNAL(readyRead()), this,
             SLOT(handleReadyRead()));
 
-    /*QTimer timer;
-    timer.setSingleShot(true);
-
-    QEventLoop loop;
-    connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
-    connect(latestReply, SIGNAL(finished()), &loop, SLOT(quit()));
-    timer.start(300000);   // 30 secs. timeout
-    loop.exec();
-
-    if(timer.isActive()) {
-        timer.stop();
-        if(latestReply->error() > 0) {
-           // handle error
-        }
-        else {
-          int v = latestReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-          if (v >= 200 && v < 300) {  // Success
-            //
-          }
-        }
-    } else {
-       // timeout
-       disconnect(latestReply, SIGNAL(finished()), &loop, SLOT(quit()));
-
-       latestReply->abort();
-    }
-    */
-
-
     return latestReply;
 }
 

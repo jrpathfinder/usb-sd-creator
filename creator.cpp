@@ -979,6 +979,10 @@ void Creator::handleDownloadError(const QString message)
 void Creator::handleFinishedDownload(const QByteArray &data)
 {
     switch (state) {
+    case STATE_DOWNLOADING_CHECKSUM:
+        state = STATE_IDLE;
+        checksumMap[selectedImage] = "bd48fb35db24af2729759ff9c5f7051d4d7364ccd0994a04dbf65f3747398e8a";
+        break;
     case STATE_AUTH_REQ:
         parseJson(data);
         Creator::setAuthorized(true);
@@ -1087,7 +1091,7 @@ void Creator::handleDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
     QString unit;
     if (speed < 1024) {
         unit = "bytes/sec";
-    } else if (speed < 1024*1024) {
+    } else if (speed < 1024 *1024) {
         speed /= 1024;
         unit = "kB/s";
     } else {
@@ -1197,24 +1201,19 @@ void Creator::downloadButtonClicked()
     }
 
     // start downloading
-    state = STATE_DOWNLOADING_IMAGE;
-    disableControls(DISABLE_CONTROL_DOWNLOAD);
-
-    //QString imageName = ui->imageSelectBox->currentText();
-    //selectedImage = imageName.section(',', 0, 0);   // remove size
+    selectedImage = "fmos-0.8.img.gz";
 
     // http://checkmobile.online/
-    selectedImage = "fmos-0.8.img.gz";
     qDebug() << "selectedImage" << selectedImage;
 
-    //    QString projectUrl = ui->projectSelectBox->itemData(ui->projectSelectBox->currentIndex()).toMap()["url"].toString();
-    //    if (projectUrl == "")
-    //        projectUrl = releasesUrl;
-    //http://cdimage.kali.org/kali-2018.2/
+    QUrl url = "http://checkmobile.online/" + selectedImage + ".md5";
 
-    QUrl url = "http://checkmobile.online/" + selectedImage;
+    state = STATE_DOWNLOADING_CHECKSUM;
 
-    //QUrl url = "https://mirror.yandex.ru/centos/7.4.1708/isos/x86_64/CentOS-7-x86_64-LiveGNOME-1708.iso";
+    manager->get(url);
+
+    state = STATE_DOWNLOADING_IMAGE;
+    disableControls(DISABLE_CONTROL_DOWNLOAD);   
 
     qDebug() << "Downloading" << url;
 

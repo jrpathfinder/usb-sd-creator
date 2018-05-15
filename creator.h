@@ -101,7 +101,8 @@ private:
         STATE_GET_RELEASES,
         STATE_DOWNLOADING_IMAGE,
         STATE_WRITING_IMAGE,
-        STATE_AUTH_REQ
+        STATE_AUTH_REQ,
+        STATE_DOWNLOADING_CHECKSUM
     } state;
     enum {
         STACK_WIDGET_MAIN = 0,
