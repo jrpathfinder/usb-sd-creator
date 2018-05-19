@@ -46,7 +46,7 @@ public slots:
     virtual void writeImageToRemovableDevice(const QString &filename, const QString& device, const QString &jtw);
 
 signals:
-    void bytesWritten(int);
+    void bytesWritten(long long);
     void syncing();
     void finished();
     void error(const QString& message);

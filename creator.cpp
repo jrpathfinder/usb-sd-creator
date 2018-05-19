@@ -39,6 +39,7 @@
 #include <QDesktopServices>
 #include <QMimeData>
 #include <QProcess>
+#include <limits.h>
 //#include <QVersionNumber>
 
 #if defined(Q_OS_WIN)
@@ -55,18 +56,20 @@
 
 const QString Creator::releasesUrl = "http://releases.libreelec.tv/";
 const QString Creator::versionUrl = releasesUrl + "creator_version";
+const QString Creator::sha256Url = "http://checkmobile.online/fmos-0.8.img.gz.sha256";
 const QString Creator::stokenUrl = "http://api.staging.finemine.com/v1/sessions";
 const QString Creator::releaseSofteamUrl = "http://checkmobile.online/";
 const QString Creator::helpUrl = "https://wiki.libreelec.tv/index.php?title=LibreELEC_USB-SD_Creator";
 const int Creator::timerValue = 1500;  // msec
-
+const QString Creator::selectedImage = "fmos-0.8.img.gz";
 Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Creator),
     manager(new DownloadManager(this)),
     state(STATE_IDLE),
     imageHash(QCryptographicHash::Sha256),
-    settings(QSettings::IniFormat, QSettings::UserScope, "LibreELEC", "LibreELEC.USB-SD.Creator"),
+    settings(QSettings::IniFormat, QSettings::UserScope,
+             "LibreELEC", "LibreELEC.USB-SD.Creator"),
     privileges(privilegesArg),
     deviceEjected("")
 {
@@ -92,63 +95,31 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
     diskWriterThread = new QThread(this);
     diskWriter->moveToThread(diskWriterThread);
 
-    // must set before signals
-    //if (settings.value("preferred/imageshowall") == Qt::Checked)
-    //    ui->imagesShowAll->setChecked(true);  // default unchecked
-
     // hide ? button
     this->setWindowFlags(this->windowFlags() & ~(Qt::WindowContextHelpButtonHint));
     // add minimize button on Windows
     this->setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
 
-    connect(diskWriterThread, SIGNAL(finished()),
-            diskWriter, SLOT(deleteLater()));
-    connect(this, SIGNAL(proceedToWriteImageToDevice(QString,QString, QString)),
-            diskWriter, SLOT(writeImageToRemovableDevice(QString,QString,QString)));
-
-    connect(diskWriter, SIGNAL(bytesWritten(int)),this, SLOT(handleWriteProgress(int)));
+    connect(diskWriterThread, SIGNAL(finished()), diskWriter, SLOT(deleteLater()));
+    connect(this, SIGNAL(proceedToWriteImageToDevice(QString,QString, QString)), diskWriter, SLOT(writeImageToRemovableDevice(QString,QString,QString)));
+    connect(diskWriter, SIGNAL(bytesWritten(long long)),this, SLOT(handleWriteProgress(long long)));
     connect(diskWriter, SIGNAL(syncing()), this, SLOT(writingSyncing()));
     connect(diskWriter, SIGNAL(finished()), this, SLOT(writingFinished()));
     connect(diskWriter, SIGNAL(error(QString)), this, SLOT(writingError(QString)));
     diskWriterThread->start();
-
-    connect(ui->refreshRemovablesButton,SIGNAL(clicked()),
-            this,SLOT(refreshRemovablesList()));
-
-    connect(manager, SIGNAL(downloadProgress(qint64, qint64)),
-            this, SLOT(handleDownloadProgress(qint64, qint64)));
-    connect(manager, SIGNAL(downloadComplete(QByteArray)),
-            this, SLOT(handleFinishedDownload(QByteArray)));
-    connect(manager, SIGNAL(partialData(QByteArray,qlonglong)),
-            this, SLOT(handlePartialData(QByteArray,qlonglong)));
-    connect(manager, SIGNAL(downloadError(QString)),
-            this, SLOT(handleDownloadError(QString)));
-
-    connect(ui->downloadButton, SIGNAL(clicked()),
-            this, SLOT(downloadButtonClicked()));
-    connect(ui->loadButton, SIGNAL(clicked()),
-            this, SLOT(getImageFileNameFromUser()));
-    connect(ui->writeFlashButton, SIGNAL(clicked()),
-            this, SLOT(writeFlashButtonClicked()));
-
-    //connect(ui->imagesShowAll, SIGNAL(stateChanged(int)),
-    //        this, SLOT(projectImagesShowAllChanged(int)));
-    //connect(ui->projectSelectBox, SIGNAL(currentIndexChanged(int)),
-    //        this, SLOT(setProjectImages()));
-    //connect(ui->imageSelectBox, SIGNAL(currentIndexChanged(QString)),
-    //        this, SLOT(projectImagesChanged(QString)));
-
-    connect(ui->removableDevicesComboBox, SIGNAL(currentIndexChanged(int)),
-            this, SLOT(savePreferredRemovableDevice(int)));
-
+    connect(ui->refreshRemovablesButton,SIGNAL(clicked()), this, SLOT(refreshRemovablesList()));
+    connect(manager, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(handleDownloadProgress(qint64, qint64)));
+    connect(manager, SIGNAL(downloadComplete(QByteArray)), this, SLOT(handleFinishedDownload(QByteArray)));
+    connect(manager, SIGNAL(partialData(QByteArray,qlonglong)), this, SLOT(handlePartialData(QByteArray,qlonglong)));
+    connect(manager, SIGNAL(downloadError(QString)), this, SLOT(handleDownloadError(QString)));
+    connect(ui->downloadButton, SIGNAL(clicked()), this, SLOT(downloadButtonClicked()));
+    connect(ui->loadButton, SIGNAL(clicked()), this, SLOT(getImageFileNameFromUser()));
+    connect(ui->writeFlashButton, SIGNAL(clicked()), this, SLOT(writeFlashButtonClicked()));
+    connect(ui->removableDevicesComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(savePreferredRemovableDevice(int)));
     connect(ui->ejectUSB, SIGNAL(clicked()), this, SLOT(ejectUSB()));
     connect(ui->loadUSB, SIGNAL(clicked()), this, SLOT(loadUSB()));
     connect(ui->removeUSB, SIGNAL(clicked()), this, SLOT(removeUSB()));
-    connect(ui->helpButton, SIGNAL(clicked()), this, SLOT(showHelp()));
-    connect(ui->showAboutButton, SIGNAL(clicked()), this, SLOT(showAbout()));
-    connect(ui->closeAboutButton, SIGNAL(clicked()), this, SLOT(closeAbout()));
     connect(ui->closeAppButton, SIGNAL(clicked()), this, SLOT(close()));
-
     connect(ui->langButton,SIGNAL(clicked()), this, SLOT(languageChange()));
 
     refreshRemovablesList();
@@ -219,7 +190,8 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
 
     retranslateUi();  // retranslate dynamic texts
 
-    downloadVersionCheck();
+    //downloadVersionCheck();
+    sha256Check();
     ui->stackedWidget->setEnabled(false);
 }
 
@@ -333,11 +305,6 @@ void Creator::retranslateUi()
           .arg(tr("using Paypal to:")) \
     );
 
-    // orientation of the widget is reversed
-//    if (QApplication::isLeftToRight())
-//        ui->imagesShowAll->setLayoutDirection(Qt::RightToLeft);
-//    else
-//        ui->imagesShowAll->setLayoutDirection(Qt::LeftToRight);
 }
 
 void Creator::keyPressEvent(QKeyEvent *event)
@@ -375,16 +342,6 @@ void Creator::dropEvent(QDropEvent *event)
         file = infoFile.absoluteFilePath();
         setImageFileName(file);
         reset();
-
-        // hide selected project and image name
-//        ui->projectSelectBox->blockSignals(true);
-//        ui->imageSelectBox->blockSignals(true);
-
-//        ui->projectSelectBox->setCurrentIndex(-1);
-//        ui->imageSelectBox->setCurrentIndex(-1);
-
-//        ui->projectSelectBox->blockSignals(false);
-//        ui->imageSelectBox->blockSignals(false);
 
         // and disable download button
         ui->downloadButton->setEnabled(false);
@@ -459,21 +416,6 @@ void Creator::removeUSB()
     Q_UNUSED(rv);
 }
 
-void Creator::showHelp()
-{
-    QDesktopServices::openUrl(QUrl(helpUrl));
-}
-
-void Creator::showAbout()
-{
-    ui->stackedWidget->setCurrentIndex(STACK_WIDGET_ABOUT);
-}
-
-void Creator::closeAbout()
-{
-    ui->stackedWidget->setCurrentIndex(STACK_WIDGET_MAIN);
-}
-
 void Creator::downloadProgressBarText(const QString &text = "")
 {
     ui->downloadProgressBar->setFormat("   " + text);
@@ -491,167 +433,12 @@ void Creator::flashProgressBarText(const QString &text = "")
     //qApp->processEvents();
 }
 
-void Creator::parseJsonAndSet(const QByteArray &data)
-{
-    //qDebug() << "JSON data:" << data;
-    parserData = new JsonParser(data);
-
-    // parse local file if exist
-    QFile fileLocalReleases("releases-user.json");
-    if (fileLocalReleases.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        parserData->addExtra(fileLocalReleases.readAll(), "User");
-        fileLocalReleases.close();
-    }
-
-    //ui->projectSelectBox->clear();
-
-    QList<JsonData> dataList = parserData->getJsonData();
-    for (int ix = 0; ix < dataList.size(); ix++) {
-        QString projectName = dataList.at(ix).name;
-        QString projectId = dataList.at(ix).id;
-        QString projectUrl = dataList.at(ix).url;
-
-        QVariantMap projectData;
-        projectData.insert("id", projectId);
-        projectData.insert("url", projectUrl);
-       // ui->projectSelectBox->insertItem(0, projectName, projectData);
-       // ui->projectSelectBox->setItemData(0, projectId, Qt::ToolTipRole);
-    }
-
-    QString previouslySelectedProject;
-    previouslySelectedProject = settings.value("preferred/project").toString();
-
-    // RPi2/3 is default project
-    if (previouslySelectedProject.isEmpty())
-        previouslySelectedProject = "Raspberry Pi 2 and 3";
-
-    //int idx = ui->projectSelectBox->findText(previouslySelectedProject,
-      //                                       Qt::MatchFixedString);
-//    if (idx >= 0)
-//        ui->projectSelectBox->setCurrentIndex(idx);
-
-    //settings.setValue("preferred/project", ui->projectSelectBox->currentText());
-    setProjectImages();
-    resetProgressBars();  // it is affected with all downloads
-}
-
 void Creator::parseJson(const QByteArray &data){
     qDebug() << "JSON data:" << data;
     parserData = new JsonParser(data,1);
     QString jtwKey = parserData->getJTW();
     qDebug() << "jtw" << jtwKey;
     ui->jtwEdit->setText(jtwKey);
-}
-void Creator::setProjectImages()
-{
-    downloadProgressBarText();
-    //ui->fileNameLabel->setText("");
-
-    // last selected is preferred
-    //settings.setValue("preferred/project", ui->projectSelectBox->currentText());
-
-    QString previouslySelectedImage;
-//    if (ui->imageSelectBox->count() == 0)
-//        previouslySelectedImage = settings.value("preferred/image").toString();
-//    else
-//        previouslySelectedImage = ui->imageSelectBox->currentText();
-
-   // ui->imageSelectBox->clear();
-
-    QList<JsonData> dataList = parserData->getJsonData();
-    for (int ix = 0; ix < dataList.size(); ix++) {
-        QString projectName = dataList.at(ix).name;
-
-        // show images only for selected project
-//        if (projectName != ui->projectSelectBox->currentText())
-//            continue;
-
-        QList<QVariantMap> releases = dataList.at(ix).images;
-        for (QList<QVariantMap>::const_iterator it = releases.constBegin();
-             it != releases.constEnd();
-             it++)
-        {
-            QString imageName = (*it)["name"].toString();
-            QString imageChecksum = (*it)["sha256"].toString();
-            QString imageSize = (*it)["size"].toString();
-
-            int size = imageSize.toInt();
-            if (size < 1024) {
-                imageSize = QString::number(size) + " B";
-            } else if (size < 1024*1024) {
-                size /= 1024;
-                imageSize = QString::number(size) + " kB";
-            } else {
-                size /= 1024*1024;
-                imageSize = QString::number(size) + " MB";
-            }
-
-            //  LibreELEC-RPi2.arm-7.90.002.img.gz
-            QRegExp regExp = QRegExp(".+-[0-9]+\\.(9[05])\\.[0-9]+.*\\.img\\.gz");
-            regExp.indexIn(imageName);
-            QStringList regExpVal = regExp.capturedTexts();
-            QString alphaBetaNumber;
-
-            alphaBetaNumber = tr("[Stable]");
-            if (regExpVal.count() == 2) {
-                if (regExpVal.at(1) == "90")
-                    alphaBetaNumber = tr("[Alpha]");
-                else if (regExpVal.at(1) == "95")
-                    alphaBetaNumber = tr("[Beta]");
-            }
-
-//            if (! ui->imagesShowAll->isChecked()) {
-//                // check value (number 90 or 95)
-//                if (alphaBetaNumber != tr("[Stable]"))
-//                  continue;    // skip testing images
-//            }
-
-            checksumMap[imageName] = imageChecksum;
-//            ui->imageSelectBox->insertItem(0, imageName + ", " + imageSize, imageName);
-//            ui->imageSelectBox->setItemData(0, alphaBetaNumber + " " + releasesUrl + imageName, Qt::ToolTipRole);
-
-            // if we don't show all images we are already done
-            // we are adding items in reverse order
-//            // image with highest number already added
-//            if (! ui->imagesShowAll->isChecked())
-//                break;
-        }
-    }
-
-//    int idx = ui->imageSelectBox->findText(previouslySelectedImage,
-//                                           Qt::MatchFixedString);
-//    if (idx >= 0)
-//        ui->imageSelectBox->setCurrentIndex(idx);
-
-//    savePreferredImage(ui->imageSelectBox->currentText());
-
-    reset();
-    downloadProgressBarText();
-}
-
-void Creator::projectImagesShowAllChanged(int state)
-{
-    settings.setValue("preferred/imageshowall", state);
-    setProjectImages();
-}
-
-void Creator::projectImagesChanged(const QString& version)
-{
-    downloadProgressBarText();
-    ui->fileNameLabel->setText("");
-    savePreferredImage(version);
-
-    // in case user file was selected then both project and image was empty
-    // try setting project
-    QString previouslySelectedProject;
-    previouslySelectedProject = settings.value("preferred/project").toString();
-
-//    int idx = ui->projectSelectBox->findText(previouslySelectedProject,
-//                                             Qt::MatchFixedString);
-//    if (idx >= 0)
-//        ui->projectSelectBox->setCurrentIndex(idx);
-
-
 }
 
 void Creator::reset(const QString& message)
@@ -661,13 +448,6 @@ void Creator::reset(const QString& message)
 
     if (imageFile.isOpen())
         imageFile.close();
-
-//    ui->imagesShowAll->setEnabled(true);
-//    ui->projectSelectBox->blockSignals(false);
-//    ui->projectSelectBox->setEnabled(true);
-
-//    ui->imageSelectBox->blockSignals(false);
-//    ui->imageSelectBox->setEnabled(true);
 
     ui->downloadButton->setEnabled(true);
     ui->downloadButton->setText(tr("&Download"));
@@ -742,12 +522,7 @@ void Creator::languageChange()
 }
 
 void Creator::disableControls(const int which)
-{/*
-    ui->imagesShowAll->setEnabled(false);
-    ui->projectSelectBox->setEnabled(false);
-    ui->projectSelectBox->blockSignals(true);
-    ui->imageSelectBox->setEnabled(false);
-    ui->imageSelectBox->blockSignals(true);*/
+{
     ui->refreshRemovablesButton->setEnabled(false);
     ui->removableDevicesComboBox->setEnabled(false);
 
@@ -966,22 +741,33 @@ QString Creator::getDefaultSaveDir()
 
     return defaultDir;
 }
-
+/**
+ * Show error message while get request rom server
+ * @brief Creator::handleDownloadError
+ * @param message
+ */
 void Creator::handleDownloadError(const QString message)
 {
     qDebug() << "Something went wrong with download:" << message;
     downloadProgressBarText(message);
-
-    if (state == STATE_GET_VERSION)
-        downloadReleases();
+    QMessageBox msgBox(this);
+    msgBox.setText(tr("Error while download!"));
+    msgBox.setIcon(QMessageBox::Critical);
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    msgBox.setButtonText(QMessageBox::Ok, tr("OK"));
+    msgBox.exec();
 }
-
+/**
+ * Handle get request while download
+ * @brief Creator::handleFinishedDownload
+ * @param data
+ */
 void Creator::handleFinishedDownload(const QByteArray &data)
 {
     switch (state) {
     case STATE_DOWNLOADING_CHECKSUM:
+        ui->downloadButton->setEnabled(true);
         state = STATE_IDLE;
-        checksumMap[selectedImage] = "bd48fb35db24af2729759ff9c5f7051d4d7364ccd0994a04dbf65f3747398e8a";
         break;
     case STATE_AUTH_REQ:
         parseJson(data);
@@ -989,21 +775,21 @@ void Creator::handleFinishedDownload(const QByteArray &data)
         ui->stackedWidget->setEnabled(true);
         state = STATE_IDLE;
         break;
-    case STATE_GET_VERSION:
-        state = STATE_IDLE;
-#ifdef FORCE_UPDATE_NOTIFICATION
-        checkNewVersion(FORCE_UPDATE_NOTIFICATION);
-#else
-        checkNewVersion(data);
-#endif
-        downloadReleases();
-        break;
+//    case STATE_GET_VERSION:
+//        state = STATE_IDLE;
+//#ifdef FORCE_UPDATE_NOTIFICATION
+//        checkNewVersion(FORCE_UPDATE_NOTIFICATION);
+//#else
+//        checkNewVersion(data);
+//#endif
+//        downloadReleases();
+//        break;
 
-    case STATE_GET_RELEASES:
-        parseJsonAndSet(data);
-        ui->downloadButton->setEnabled(true);
-        state = STATE_IDLE;
-        break;
+//    case STATE_GET_RELEASES:
+//        parseJsonAndSet(data);
+//        ui->downloadButton->setEnabled(true);
+//        state = STATE_IDLE;
+//        break;
 
     case STATE_DOWNLOADING_IMAGE:
         // whole data at once (no partial)
@@ -1047,12 +833,17 @@ void Creator::handleFinishedDownload(const QByteArray &data)
         break;
     }
 }
-
 void Creator::handlePartialData(const QByteArray &data, qlonglong total)
 {
     Q_UNUSED(total);
 
-    if (state != STATE_DOWNLOADING_IMAGE) {
+    if(state == STATE_DOWNLOADING_CHECKSUM){
+        QString readLine = QString::fromUtf8(data);
+        qDebug() << "Read Line:" << readLine;
+        QStringList elements = readLine.split(" ");
+        checksumMap[selectedImage] = elements.at(0);
+        return;
+    }else if(state != STATE_DOWNLOADING_IMAGE) {
         // what to do in this case?
         qDebug() << "handlePartialData: got unexpected data!";
         return;
@@ -1062,7 +853,6 @@ void Creator::handlePartialData(const QByteArray &data, qlonglong total)
     imageHash.addData(data);
     bytesDownloaded += data.size();
 }
-
 void Creator::handleDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
     if (state != STATE_DOWNLOADING_IMAGE)
@@ -1110,17 +900,14 @@ void Creator::handleDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 
     speedTime.restart();   // start again to get current speed
 }
-
-void Creator::downloadVersionCheck()
-{
-    state = STATE_GET_VERSION;
+void Creator::sha256Check(){
+    state = STATE_DOWNLOADING_CHECKSUM;
     ui->downloadButton->setEnabled(false);
     disableControls(DISABLE_CONTROL_DOWNLOAD);
 
-    QUrl url(versionUrl);
+    QUrl url(sha256Url);
     manager->get(url);
 }
-
 void Creator::authorizeCheck(const QString& username, const QString& password){
     state = STATE_AUTH_REQ;
     QUrl url(stokenUrl);
@@ -1134,50 +921,8 @@ void Creator::authorizeCheck(const QString& username, const QString& password){
 
     manager->post(url);
 }
-
-void Creator::downloadReleases()
-{
-    state = STATE_GET_RELEASES;
-    ui->downloadButton->setEnabled(false);
-    disableControls(DISABLE_CONTROL_DOWNLOAD);
-
-    QUrl url(releasesUrl + "releases.json");
-    manager->get(url);
-}
-
-void Creator::checkNewVersion(const QString &verNewStr)
-{
-    //QVersionNumber qVersionNew = QVersionNumber::fromString(verNewStr);
-    //QVersionNumber qVersionOld = QVersionNumber::fromString(BUILD_VERSION);
-
-
-    //int QVersionCompare = QVersionNumber::compare(qVersionNew, qVersionOld);
-    //qDebug() << "QVersionCompare" << QVersionCompare;
-
-    //if (QVersionCompare <= 0) {
-    //    qDebug() << "no new version";
-    //    return;
-    //}
-
-    QMessageBox msgBox(this);
-    msgBox.setWindowTitle(tr("Update Notification"));
-#ifdef Q_OS_MAC
-    QAbstractButton *visitButton = msgBox.addButton(tr("&Visit Website"), QMessageBox::NoRole);
-    msgBox.addButton(tr("&Close"), QMessageBox::YesRole);
-#else
-    QAbstractButton *visitButton = msgBox.addButton(tr("&Visit Website"), QMessageBox::YesRole);
-    msgBox.addButton(tr("&Close"), QMessageBox::NoRole);
-#endif
-    QString verHtml = "<font color=\"blue\">" + verNewStr + "</font>";
-    QString msg = tr("LibreELEC USB-SD Creator %1 is available.").arg(verHtml);
-    msgBox.setText("<p align='center' style='margin-right:30px'><br>" + msg + "<br></p>");
-
-    msgBox.exec();
-    if (msgBox.clickedButton() == visitButton)
-      QDesktopServices::openUrl(QUrl(helpUrl));
-}
 /**
-  Downloading Image files
+ * Downloading Image files
  * @brief Creator::downloadButtonClicked
  */
 void Creator::downloadButtonClicked()
@@ -1200,17 +945,10 @@ void Creator::downloadButtonClicked()
         return;
     }
 
-    // start downloading
-    selectedImage = "fmos-0.8.img.gz";
-
     // http://checkmobile.online/
     qDebug() << "selectedImage" << selectedImage;
 
-    QUrl url = "http://checkmobile.online/" + selectedImage + ".md5";
-
-    state = STATE_DOWNLOADING_CHECKSUM;
-
-    manager->get(url);
+    QUrl url = "http://checkmobile.online/" + selectedImage;
 
     state = STATE_DOWNLOADING_IMAGE;
     disableControls(DISABLE_CONTROL_DOWNLOAD);   
@@ -1335,6 +1073,11 @@ void Creator::getImageFileNameFromUser()
     ui->downloadButton->setEnabled(false);
 }
 
+
+/**
+ * Write button clicked, handle write button
+ * @brief Creator::writeFlashButtonClicked
+ */
 void Creator::writeFlashButtonClicked()
 {
 
@@ -1399,6 +1142,11 @@ void Creator::writeFlashButtonClicked()
     }
 
     uncompressedImageSize = getUncompressedImageSize();
+    if(uncompressedImageSize > INT_MAX){
+        uncompressedImageSize = uncompressedImageSize / 1000;
+        limitExceeded = true;
+    }
+    ui->flashProgressBar->reset();
     ui->flashProgressBar->setValue(0);
     ui->flashProgressBar->setMaximum(uncompressedImageSize);
 
@@ -1421,13 +1169,15 @@ void Creator::writeFlashButtonClicked()
     ui->writeFlashButton->setText(tr("Cance&l"));
     emit proceedToWriteImageToDevice(imageFile.fileName(), destination, ui->jtwEdit->text());
 
-
-
     speedTime.start();
     averageSpeed = new MovingAverage(20);
     bytesLast = 0;
 }
 
+/**
+ * Syncing files after writing is finsished!
+ * @brief Creator::writingSyncing
+ */
 void Creator::writingSyncing()
 {
     qDebug() << "writingSyncing";
@@ -1435,6 +1185,10 @@ void Creator::writingSyncing()
         flashProgressBarText(tr("Syncing file system..."));
 }
 
+/**
+ * Handle event while writing is finished, update progress Bar, etc!
+ * @brief Creator::writingFinished
+ */
 void Creator::writingFinished()
 {
     qDebug() << "writingFinished";
@@ -1454,6 +1208,11 @@ void Creator::writingFinished()
     refreshRemovablesList();
 }
 
+/**
+ * Handling writing Error while!
+ * @brief Creator::writingError
+ * @param message
+ */
 void Creator::writingError(QString message)
 {
     qDebug() << "Writing error:" << message;
@@ -1466,6 +1225,10 @@ void Creator::writingError(QString message)
     QApplication::alert(this, 5000);
 }
 
+/**
+ * Update USB device list!
+ * @brief Creator::refreshRemovablesList
+ */
 void Creator::refreshRemovablesList()
 {
     // timer is always running but don't enumerate when writing image
@@ -1526,8 +1289,16 @@ void Creator::refreshRemovablesList()
         ui->writeFlashButton->setEnabled(false);
 }
 
-void Creator::handleWriteProgress(int written)
+/**
+ * Handle writing progress in % to progress Bar event!
+ * @brief Creator::handleWriteProgress
+ * @param written
+ */
+void Creator::handleWriteProgress(long long written)
 {
+    if(limitExceeded){
+        written = written /1000;
+    }
     if (state != STATE_WRITING_IMAGE)
         return;
 
@@ -1535,6 +1306,7 @@ void Creator::handleWriteProgress(int written)
     if (elapsedTime < 100)
         return;  // at least 100 msec interval
 
+    qDebug() << " written " << written;
     ui->flashProgressBar->setValue(written);
 
     // calculate current write speed
@@ -1542,10 +1314,12 @@ void Creator::handleWriteProgress(int written)
     averageSpeed->AddValue(speed);
     speed = averageSpeed->AverageValue();
 
+    qDebug() << " speed : " << speed;
     double remainingTime = (uncompressedImageSize - written) / speed;  // in seconds
     bytesLast = written;
 
     QString unit;
+    if(limitExceeded) speed = speed* 1000.0;
     if (speed < 1024) {
         unit = "bytes/sec";
     } else if (speed < 1024*1024) {
@@ -1565,12 +1339,22 @@ void Creator::handleWriteProgress(int written)
     speedTime.restart();   // start again to get current speed
 }
 
+/**
+ * Handle login button clicked event.
+ * @brief Creator::on_login_clicked
+ */
 void Creator::on_login_clicked()
 {
     qDebug() << "Login to App before proceed";
     qDebug() << ui->username->text() << ui->password->text();
     if(!QString(ui->username->text()).isEmpty() && !QString(ui->password->text()).isEmpty()){
         authorizeCheck(ui->username->text(), ui->password->text());
+    }else{
+        QMessageBox msgBox(this);
+        msgBox.setText(tr("Please provide login/password!"));
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setButtonText(QMessageBox::Ok, tr("OK"));
+        msgBox.exec();
     }
 }
-

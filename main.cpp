@@ -101,7 +101,6 @@ int main(int argc, char *argv[])
     privileges.SetUser();
     privileges.Whoami();
 
-
     Creator win(privileges, 0);
         win.setArgFile(argFile);
         win.show();

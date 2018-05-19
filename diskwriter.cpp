@@ -107,7 +107,18 @@ void DiskWriter::writeGzCompressedImage(const QString &filename, const QString& 
         }
 
         this->sync();
-        emit bytesWritten(gztell(src));
+        long long btsWritten = gztell(src);
+        long long imax = INT_MAX;
+        long long delta=0, bytes=0;
+        if(btsWritten < 0){
+            delta = imax + btsWritten;
+            bytes = imax + delta;
+        }
+        qDebug() << " written: " << bytes;
+        if(btsWritten <0)
+            emit bytesWritten(bytes);
+        else
+            emit bytesWritten(gztell(src));
     } // while
 
     emit syncing();

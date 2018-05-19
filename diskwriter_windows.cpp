@@ -262,6 +262,7 @@ void DiskWriter_windows::copyToUsb(const QString& device, const QString& jtw){
     }
 
     srcFile.close();
+    bool found =false;
     foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
         if (
                 storage.isValid() &&
@@ -270,6 +271,7 @@ void DiskWriter_windows::copyToUsb(const QString& device, const QString& jtw){
                 storage.name() == "FDP"
             ) {
             if (!storage.isReadOnly()) {
+               found = true;
                qDebug() << "path:" << storage.rootPath();
                location = storage.rootPath();
                QString destPath = location+path1;
@@ -284,5 +286,10 @@ void DiskWriter_windows::copyToUsb(const QString& device, const QString& jtw){
                qDebug("copied");
             }
         }
+    }
+    if(!found){
+        QMessageBox::critical(NULL, QObject::tr("Dismount Error"),
+                              QObject::tr("Не удается найти раздел для записи токена!"));
+
     }
 }

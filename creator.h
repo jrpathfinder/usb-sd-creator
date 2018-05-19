@@ -97,8 +97,6 @@ private:
     };
     enum {
         STATE_IDLE,
-        STATE_GET_VERSION,
-        STATE_GET_RELEASES,
         STATE_DOWNLOADING_IMAGE,
         STATE_WRITING_IMAGE,
         STATE_AUTH_REQ,
@@ -118,7 +116,7 @@ private:
     QString downloadUrl;
     QString downloadFileSize;
     QString checksum;
-    QString selectedImage;
+    static const QString selectedImage;
     QMap<QString, QString> checksumMap;
     DiskWriter *diskWriter;
     QThread* diskWriterThread;
@@ -128,6 +126,7 @@ private:
     static const QString versionUrl;
     static const QString stokenUrl;
     static const QString releaseSofteamUrl;
+    static const QString sha256Url;
     static const QString helpUrl;
     JsonParser *parserData;
     static const QString jtw;
@@ -136,6 +135,7 @@ private:
     qlonglong bytesLast;
     MovingAverage *averageSpeed;
     unsigned int uncompressedImageSize;
+    bool limitExceeded = false;
     Privileges privileges;
     QString deviceEjected;
     bool showLoadEject;
@@ -154,23 +154,13 @@ private slots:
     void ejectUSB();
     void loadUSB();
     void removeUSB();
-    void showHelp();
-    void showAbout();
-    void closeAbout();
-
     void handleDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
     void handleFinishedDownload(const QByteArray& data);
     void handlePartialData(const QByteArray& data, qlonglong total);
     void handleDownloadError(const QString);
-    void downloadVersionCheck();
-    void checkNewVersion(const QString &version);
-    void downloadReleases();
+    void sha256Check();
     void authorizeCheck(const QString& username, const QString& password);
-    void parseJsonAndSet(const QByteArray &data);
     void parseJson(const QByteArray &data);
-    void setProjectImages();
-    void projectImagesShowAllChanged(int state);
-    void projectImagesChanged(const QString& version);
     void refreshRemovablesList();
     void downloadButtonClicked();
     void getImageFileNameFromUser();
@@ -185,7 +175,7 @@ private slots:
     void languageChange();
     void downloadProgressBarText(const QString &text);
     void flashProgressBarText(const QString &text);
-    void handleWriteProgress(int written);
+    void handleWriteProgress(long long written);
     void on_login_clicked();
 };
 
