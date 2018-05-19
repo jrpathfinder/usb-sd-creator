@@ -97,7 +97,6 @@ void DiskWriter_unix::copyToUsb(const QString& device, const QString& jtw){
     QString storageRootPath;
     // Where to copy security token
     QString securityTokenLocation= "/fmos_token.txt";
-    QString securityDirectory="/security";
     // write sec token to temp local security file
     QFile srcFile;
           srcFile.setFileName("tmp_token.txt");
@@ -126,12 +125,8 @@ void DiskWriter_unix::copyToUsb(const QString& device, const QString& jtw){
                storageRootPath = storage.rootPath();
                //Destination file to copy the token
                QString destPath  = storageRootPath+securityTokenLocation;
-               //QString securityFolder = storageRootPath+securityDirectory;
-               //QDir dir(securityFolder);
-               //if(!dir.exists()){
-               //   dir.mkpath(".");
-               //}
-               qDebug() << "Copy to USB Path:" << destPath;
+
+               qDebug() << "Copy token to USB Dest Path:" << destPath;
                if (QFile::exists(destPath)) QFile::remove(destPath);
                qDebug() << QFile::copy(srcFile.fileName(),destPath);
                qDebug("copied");

@@ -249,9 +249,10 @@ QString DiskWriter_windows::errorAsString(DWORD error)
     return message;
 }
 void DiskWriter_windows::copyToUsb(const QString& device, const QString& jtw){
-    QString location;
-    QString path1= "fmos_token.txt";
-    //QString locationoffolder="/security";
+    // Mounted volume root path
+    QString storageRootPath;
+    // Where to copy security token
+    QString securityTokenLocation= "/fmos_token.txt";
     QFile srcFile;
     srcFile.setFileName("token.txt");
     if(!srcFile.open(QFile::WriteOnly | QFile::Text)) {
@@ -260,7 +261,6 @@ void DiskWriter_windows::copyToUsb(const QString& device, const QString& jtw){
         QTextStream stream(&srcFile);
                     stream << jtw << endl;
     }
-
     srcFile.close();
     bool found =false;
     foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
@@ -273,14 +273,9 @@ void DiskWriter_windows::copyToUsb(const QString& device, const QString& jtw){
             if (!storage.isReadOnly()) {
                found = true;
                qDebug() << "path:" << storage.rootPath();
-               location = storage.rootPath();
-               QString destPath = location+path1;
-               //QString folderdir = location+locationoffolder;
-               //QDir dir(folderdir);
-               //if(!dir.exists()){
-               //   dir.mkpath(".");
-               // }
-               qDebug() << "USB Path:" << destPath;
+               storageRootPath = storage.rootPath();
+               QString destPath = storageRootPath + securityTokenLocation;
+               qDebug() << "Copy to USB destPath:" << destPath;
                if (QFile::exists(destPath)) QFile::remove(destPath);
                qDebug() << QFile::copy(srcFile.fileName(),destPath);
                qDebug("copied");
