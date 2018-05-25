@@ -1,26 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
-//      This file is part of LibreELEC - http://www.libreelec.tv
-//      Copyright (C) 2013-2015 RasPlex project
-//      Copyright (C) 2016 Team LibreELEC
-//
-//  LibreELEC is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 2 of the License, or
-//  (at your option) any later version.
-//
-//  LibreELEC is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with LibreELEC.  If not, see <http://www.gnu.org/licenses/>.
-////////////////////////////////////////////////////////////////////////////////
-
 #include "creator.h"
 #include "ui_creator.h"
 #include "version.h"
-
 #include <QDebug>
 #include <QString>
 #include <QFile>
@@ -40,8 +20,6 @@
 #include <QMimeData>
 #include <QProcess>
 #include <limits.h>
-//#include <QVersionNumber>
-
 #if defined(Q_OS_WIN)
 #include "diskwriter_windows.h"
 #include "deviceenumerator_windows.h"
@@ -49,17 +27,16 @@
 #include <unistd.h>
 #include "diskwriter_unix.h"
 #include "deviceenumerator_unix.h"
+#include "login.h"
 #endif
 
-// force update notification dialog
-//#define FORCE_UPDATE_NOTIFICATION "1.3"
-
-const QString Creator::releasesUrl = "http://releases.libreelec.tv/";
-const QString Creator::versionUrl = releasesUrl + "creator_version";
+/**
+ * Main App class creator for integrating other modules!
+ * @brief Creator::sha256Url
+ */
 const QString Creator::sha256Url = "http://checkmobile.online/fmos-0.8.img.gz.sha256";
 const QString Creator::stokenUrl = "http://api.staging.finemine.com/v1/sessions";
 const QString Creator::releaseSofteamUrl = "http://checkmobile.online/";
-const QString Creator::helpUrl = "https://wiki.libreelec.tv/index.php?title=LibreELEC_USB-SD_Creator";
 const int Creator::timerValue = 1500;  // msec
 const QString Creator::selectedImage = "fmos-0.8.img.gz";
 Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
@@ -69,9 +46,10 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
     state(STATE_IDLE),
     imageHash(QCryptographicHash::Sha256),
     settings(QSettings::IniFormat, QSettings::UserScope,
-             "LibreELEC", "LibreELEC.USB-SD.Creator"),
+             "SOFTEAM", "Softeam.USB-SD.Creator"),
     privileges(privilegesArg),
-    deviceEjected("")
+    deviceEjected(""),
+    lform(this)
 {
     // dummy strings used for translation buttons on message box
     QString forMsgBoxTranslationStrings = tr("Yes") + \
@@ -193,6 +171,13 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
     //downloadVersionCheck();
     sha256Check();
     ui->stackedWidget->setEnabled(false);
+    //login lform;// = new login(this);
+    connect(&lform, SIGNAL(auth(QString, QString)), this,
+            SLOT(authorizeCheck(QString, QString)));
+
+
+    lform.show();
+
 }
 
 bool Creator::showRootMessageBox()
@@ -908,7 +893,7 @@ void Creator::sha256Check(){
     QUrl url(sha256Url);
     manager->get(url);
 }
-void Creator::authorizeCheck(const QString& username, const QString& password){
+void Creator::authorizeCheck(QString username, QString password){
     state = STATE_AUTH_REQ;
     QUrl url(stokenUrl);
     QUrlQuery query;
@@ -1331,7 +1316,7 @@ void Creator::handleWriteProgress(long long written)
     }
 
     QString speedText = QString::fromLatin1("%1 %2").arg(speed, 3, 'f', 1).arg(unit);
-    QString timeText = QString::number(remainingTime, 'f', 0);
+    QString timeText  = QString::number(remainingTime, 'f', 0);
     int percentage = ((double) written) / uncompressedImageSize * 100;
 
     flashProgressBarText(tr("%1 seconds remaining - %2% at %3").arg(timeText, QString::number(percentage), speedText));
@@ -1346,15 +1331,15 @@ void Creator::handleWriteProgress(long long written)
 void Creator::on_login_clicked()
 {
     qDebug() << "Login to App before proceed";
-    qDebug() << ui->username->text() << ui->password->text();
-    if(!QString(ui->username->text()).isEmpty() && !QString(ui->password->text()).isEmpty()){
-        authorizeCheck(ui->username->text(), ui->password->text());
-    }else{
-        QMessageBox msgBox(this);
-        msgBox.setText(tr("Please provide login/password!"));
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setButtonText(QMessageBox::Ok, tr("OK"));
-        msgBox.exec();
-    }
+    //qDebug() << ui->username->text() << ui->password->text();
+    //if(!QString(ui->username->text()).isEmpty() && !QString(ui->password->text()).isEmpty()){
+        //authorizeCheck(ui->username->text(), ui->password->text());
+    //}else{
+    //    QMessageBox msgBox(this);
+    //    msgBox.setText(tr("Please provide login/password!"));
+    //    msgBox.setIcon(QMessageBox::Critical);
+    //    msgBox.setStandardButtons(QMessageBox::Ok);
+    //    msgBox.setButtonText(QMessageBox::Ok, tr("OK"));
+    //    msgBox.exec();
+    //}
 }

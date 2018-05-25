@@ -1,31 +1,12 @@
-################################################################################
-#      This file is part of LibreELEC - http://www.libreelec.tv
-#      Copyright (C) 2013-2015 RasPlex project
-#      Copyright (C) 2016 Team LibreELEC
-#
-#  LibreELEC is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  LibreELEC is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with LibreELEC.  If not, see <http://www.gnu.org/licenses/>.
-################################################################################
-
 #-------------------------------------------------
 #
-# Project created by QtCreator 2013-03-14T18:13:26
+# Project created by QtCreator 2018-05-23T18:13:26
 #
 #-------------------------------------------------
 
 QT += core gui network widgets
 
-TARGET = LibreELEC.USB-SD.Creator
+TARGET = Softeam.USB-SD.Creator
 TEMPLATE = app
 
 SOURCES += main.cpp \
@@ -34,7 +15,8 @@ SOURCES += main.cpp \
            jsonparser.cpp \
            movingaverage.cpp \
            downloadmanager.cpp \
-           translator.cpp
+           translator.cpp \
+           login.cpp
 
 HEADERS += creator.h \
            diskwriter.h \
@@ -42,7 +24,8 @@ HEADERS += creator.h \
            movingaverage.h \
            downloadmanager.h  \
            deviceenumerator.h \
-           translator.h
+           translator.h \
+           login.h
 
 MOC_DIR     = .generated_files
 OBJECTS_DIR = .generated_files
@@ -89,7 +72,7 @@ static { # everything below takes effect with CONFIG += static
 
 win32 {
     # add suffix
-    TARGET = LibreELEC.USB-SD.Creator.Win32
+    TARGET = Softeam.Creator.Win32
 
     SOURCES += diskwriter_windows.cpp \
                deviceenumerator_windows.cpp
@@ -159,7 +142,7 @@ macx {
 
 linux* {
     # manually add suffix 32/64
-    TARGET = LibreELEC.USB-SD.Creator.Linux-bit.bin
+    TARGET = Softeam.USB-SD.Creator.Linux-bit.bin
 
     SOURCES += privileges_unix.cpp
     HEADERS += privileges_unix.h
@@ -169,7 +152,8 @@ linux* {
     LIBS += -lblkid
 }
 
-FORMS += creator.ui
+FORMS += creator.ui \
+    login.ui
 FORMS +=
 
 LIBS += -lz

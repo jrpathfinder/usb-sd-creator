@@ -1,22 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-//      This file is part of LibreELEC - http://www.libreelec.tv
-//      Copyright (C) 2013-2015 RasPlex project
-//      Copyright (C) 2016 Team LibreELEC
-//
-//  LibreELEC is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 2 of the License, or
-//  (at your option) any later version.
-//
-//  LibreELEC is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with LibreELEC.  If not, see <http://www.gnu.org/licenses/>.
-////////////////////////////////////////////////////////////////////////////////
-
 #ifndef CREATOR_H
 #define CREATOR_H
 
@@ -27,7 +8,7 @@
 #include <QFile>
 #include <QStandardPaths>
 #include <QTime>
-
+#include "login.h"
 #include "downloadmanager.h"
 #include "jsonparser.h"
 #include "movingaverage.h"
@@ -122,12 +103,10 @@ private:
     QThread* diskWriterThread;
     DeviceEnumerator* devEnumerator;
     static const int timerValue;
-    static const QString releasesUrl;
     static const QString versionUrl;
     static const QString stokenUrl;
     static const QString releaseSofteamUrl;
     static const QString sha256Url;
-    static const QString helpUrl;
     JsonParser *parserData;
     static const QString jtw;
     QSettings settings;
@@ -140,7 +119,7 @@ private:
     QString deviceEjected;
     bool showLoadEject;
     bool authorized = false;
-
+    login lform;
 protected:
     void timerEvent(QTimerEvent *event);
 
@@ -159,7 +138,7 @@ private slots:
     void handlePartialData(const QByteArray& data, qlonglong total);
     void handleDownloadError(const QString);
     void sha256Check();
-    void authorizeCheck(const QString& username, const QString& password);
+
     void parseJson(const QByteArray &data);
     void refreshRemovablesList();
     void downloadButtonClicked();
@@ -177,6 +156,8 @@ private slots:
     void flashProgressBarText(const QString &text);
     void handleWriteProgress(long long written);
     void on_login_clicked();
+public slots:
+    virtual void authorizeCheck(QString u, QString p);
 };
 
 #endif // CREATOR_H
