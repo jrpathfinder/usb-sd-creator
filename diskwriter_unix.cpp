@@ -5,7 +5,8 @@
 #include <unistd.h>
 #include <QStorageInfo>
 #include <QProcess>
-
+#include <QThread>
+#include <QMessageBox>
 #ifdef Q_OS_MAC
 #include <QProcess>
 #endif
@@ -62,6 +63,27 @@ bool DiskWriter_unix::write(const QByteArray &data)
 {
     return dev.write(data);
 }
+
+bool DiskWriter_unix::checkIsMounted(const QString &device) const
+{
+    qDebug() << "checkIsMounted " << device;
+    char buf[2];
+    QFile mountsFile("/proc/mounts");
+    if (!mountsFile.open(QFile::ReadOnly)) {
+        qDebug() << "Failed to open" << mountsFile.fileName();
+        return true;
+    }
+
+    // QFile::atEnd() is unreliable for proc
+    while (mountsFile.read(buf, 1) > 0) {
+        QString line = mountsFile.readLine();
+        line.prepend(buf[0]);
+        if (line.contains(device))
+            return true;
+    }
+
+    return false;
+}
 /**
  * Copy security token to USB Flash drive after image file have burnt
  * @brief DiskWriter_unix::copyToUsb
@@ -69,11 +91,34 @@ bool DiskWriter_unix::write(const QByteArray &data)
  */
 void DiskWriter_unix::copyToUsb(const QString& device, const QString& jtw){
 
+    /**
+     * Try to mount new device
+     * @brief cmd
+     */
+    QString what = device+"1";
     QProcess cmd;
-    cmd.start("mount "+device+"1 /media/FDP", QIODevice::ReadWrite);
-    cmd.waitForStarted();
-    cmd.waitForFinished();
-    qDebug() << "mounted";
+    qDebug()<<"exec: mount "+what+" /media/FDP";
+    cmd.start("mount "+what+" /media/FDP", QIODevice::ReadWrite);
+    if(!cmd.waitForStarted() || !cmd.waitForFinished(10000)){
+        qDebug() << "mount: not correct";
+        QMessageBox::critical(NULL, QObject::tr("Mount Error"),
+        QObject::tr("Не удается смонтировать раздел для записи токена!"));
+    }
+    qDebug() << cmd.readAllStandardError();
+    qDebug() << cmd.readAllStandardOutput();
+    QProcess::ExitStatus status = cmd.exitStatus();
+    if (status == 0)
+    {
+        qDebug() << "Usb Inserted!";
+        qDebug() << "mounted FDP 1.0";
+    }
+    qDebug() << "mount: checking";
+    if (checkIsMounted(what) == false) {
+        qDebug() << "mount: not correct";
+        QMessageBox::critical(NULL, QObject::tr("Mount Error"),
+        QObject::tr("Не удается смонтировать раздел для записи токена!"));
+    }
+    qDebug() << "mount: success!";
 
     // Mounted volume root path
     QString storageRootPath;
@@ -90,6 +135,7 @@ void DiskWriter_unix::copyToUsb(const QString& device, const QString& jtw){
           }
           srcFile.close();
     //Iterate over available mounted volumes:
+    bool found = false;
     foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
         qDebug()<<"Storage Root Path" << storage.rootPath();
         if (
@@ -103,7 +149,7 @@ void DiskWriter_unix::copyToUsb(const QString& device, const QString& jtw){
             ) {
 
             if (!storage.isReadOnly()) {
-
+               found = true;
                storageRootPath = storage.rootPath();
                //Destination file to copy the token
                QString destPath  = storageRootPath+securityTokenLocation;
@@ -114,6 +160,11 @@ void DiskWriter_unix::copyToUsb(const QString& device, const QString& jtw){
                qDebug("copied");
             }
         }
+    }
+    if(!found){
+        QMessageBox::critical(NULL, QObject::tr("Dismount Error"),
+                              QObject::tr("Не удается найти раздел для записи токена!"));
+
     }
 }
 

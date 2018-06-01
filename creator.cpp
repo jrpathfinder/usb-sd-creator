@@ -98,7 +98,7 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
     connect(ui->loadUSB, SIGNAL(clicked()), this, SLOT(loadUSB()));
     connect(ui->removeUSB, SIGNAL(clicked()), this, SLOT(removeUSB()));
     connect(ui->closeAppButton, SIGNAL(clicked()), this, SLOT(close()));
-    connect(ui->langButton,SIGNAL(clicked()), this, SLOT(languageChange()));
+    //connect(ui->langButton,SIGNAL(clicked()), this, SLOT(languageChange()));
 
     refreshRemovablesList();
 
@@ -164,7 +164,7 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
     QDesktopServices::setUrlHandler("https", this, "httpsUrlHandler");
 
     translator = new Translator(this, &settings);  // pass parent
-    translator->fillLanguages(ui->menuLanguage, ui->langButton);
+    //translator->fillLanguages(ui->menuLanguage, ui->langButton);
 
     retranslateUi();  // retranslate dynamic texts
 
@@ -175,8 +175,9 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
     connect(&lform, SIGNAL(auth(QString, QString)), this,
             SLOT(authorizeCheck(QString, QString)));
 
-
+    connect(&lform, SIGNAL(close()), this, SLOT(close()));
     lform.show();
+    ui->fileNameLabel->setVisible(false);
 
 }
 
@@ -412,7 +413,7 @@ void Creator::downloadProgressBarText(const QString &text = "")
 void Creator::flashProgressBarText(const QString &text = "")
 {
     ui->flashProgressBar->setFormat("   " + text);
-    qDebug() << "FLASH:" << text;
+    //qDebug() << "FLASH:" << text;
     ui->flashProgressBar->repaint();
     ui->flashProgressBar->update();
     //qApp->processEvents();
@@ -503,7 +504,7 @@ void Creator::savePreferredRemovableDevice(int idx)
 void Creator::languageChange()
 {
     // menu has padding around
-    ui->menuLanguage->exec(ui->langButton->mapToGlobal(QPoint(0, 0)));
+    //ui->menuLanguage->exec(ui->langButton->mapToGlobal(QPoint(0, 0)));
 }
 
 void Creator::disableControls(const int which)
@@ -1291,7 +1292,7 @@ void Creator::handleWriteProgress(long long written)
     if (elapsedTime < 100)
         return;  // at least 100 msec interval
 
-    qDebug() << " written " << written;
+    //qDebug() << " written " << written;
     ui->flashProgressBar->setValue(written);
 
     // calculate current write speed
@@ -1325,21 +1326,25 @@ void Creator::handleWriteProgress(long long written)
 }
 
 /**
- * Handle login button clicked event.
+ * Handle sign out button clicked event.
  * @brief Creator::on_login_clicked
  */
-void Creator::on_login_clicked()
+void Creator::on_pushButton2_clicked()
 {
-    qDebug() << "Login to App before proceed";
-    //qDebug() << ui->username->text() << ui->password->text();
-    //if(!QString(ui->username->text()).isEmpty() && !QString(ui->password->text()).isEmpty()){
-        //authorizeCheck(ui->username->text(), ui->password->text());
-    //}else{
-    //    QMessageBox msgBox(this);
-    //    msgBox.setText(tr("Please provide login/password!"));
-    //    msgBox.setIcon(QMessageBox::Critical);
-    //    msgBox.setStandardButtons(QMessageBox::Ok);
-    //    msgBox.setButtonText(QMessageBox::Ok, tr("OK"));
-    //    msgBox.exec();
-    //}
+    qDebug() << "Signing Out from App!";
+
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle(tr("Confirm sign out!"));
+    msgBox.setText(tr("Are you sure you want to sign out?\n\n"
+                      "You will be signed out!"));
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msgBox.setDefaultButton(QMessageBox::No);
+    msgBox.setButtonText(QMessageBox::Yes, tr("Yes"));
+    msgBox.setButtonText(QMessageBox::No, tr("No"));
+    int ret = msgBox.exec();
+    if (ret == QMessageBox::Yes) {
+        ui->stackedWidget->setEnabled(false);
+        lform.show();
+        setAuthorized(false);
+    }
 }

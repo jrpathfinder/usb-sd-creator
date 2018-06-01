@@ -20,6 +20,7 @@ private:
     bool isOpen();
     bool write(const QByteArray &data);
     void copyToUsb(const QString & device, const QString& jtw);
+    bool checkIsMounted(const QString& device) const;
 };
 
 #endif // DISKWRITER_UNIX_H

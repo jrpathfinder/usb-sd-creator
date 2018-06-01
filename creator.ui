@@ -36,7 +36,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="resources.qrc">
-    <normaloff>:/icons/le_icon_256.png</normaloff>:/icons/le_icon_256.png</iconset>
+    <normaloff>:/icons/favicon-x2000.svg</normaloff>:/icons/favicon-x2000.svg</iconset>
   </property>
   <property name="sizeGripEnabled">
    <bool>false</bool>
@@ -617,41 +617,33 @@
       <string/>
      </property>
     </widget>
-    <widget class="QPushButton" name="langButton">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
+    <widget class="QPushButton" name="pushButton2">
      <property name="geometry">
       <rect>
-       <x>450</x>
-       <y>50</y>
-       <width>22</width>
-       <height>18</height>
+       <x>400</x>
+       <y>40</y>
+       <width>80</width>
+       <height>22</height>
       </rect>
      </property>
-     <property name="cursor">
-      <cursorShape>PointingHandCursor</cursorShape>
-     </property>
      <property name="styleSheet">
-      <string notr="true"/>
+      <string notr="true">font: 9pt &quot;Sans Serif&quot;;
+color: rgb(0, 0, 255);
+text-decoration: underline;</string>
      </property>
      <property name="text">
-      <string/>
-     </property>
-     <property name="icon">
-      <iconset resource="resources.qrc">
-       <normaloff>:/lang/flag-en_GB.png</normaloff>:/lang/flag-en_GB.png</iconset>
+      <string>Sign out</string>
      </property>
      <property name="flat">
       <bool>true</bool>
      </property>
     </widget>
+    <zorder>fileNameLabel</zorder>
     <zorder>horizontalLayoutWidgetStep4</zorder>
     <zorder>downloadProgressBar</zorder>
     <zorder>horizontalLayoutWidgetStep3</zorder>
     <zorder>flashProgressBar</zorder>
     <zorder>horizontalLayoutWidgetStep2</zorder>
-    <zorder>fileNameLabel</zorder>
     <zorder>horizontalLayoutWidget</zorder>
     <zorder>horizontalLayoutWidget_2</zorder>
     <zorder>horizontalLayoutWidget_3</zorder>
@@ -661,7 +653,7 @@
     <zorder>loadUSB</zorder>
     <zorder>removeUSB</zorder>
     <zorder>headerBackground</zorder>
-    <zorder>langButton</zorder>
+    <zorder>pushButton2</zorder>
    </widget>
    <widget class="QWidget" name="pageAbout">
     <widget class="QLabel" name="labelAbout">
@@ -790,7 +782,6 @@
  </widget>
  <layoutdefault spacing="5" margin="10"/>
  <tabstops>
-  <tabstop>langButton</tabstop>
   <tabstop>downloadButton</tabstop>
   <tabstop>loadButton</tabstop>
   <tabstop>removableDevicesComboBox</tabstop>

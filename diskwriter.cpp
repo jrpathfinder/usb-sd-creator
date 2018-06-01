@@ -107,6 +107,7 @@ void DiskWriter::writeGzCompressedImage(const QString &filename, const QString& 
     this->sync();
     this->close();
     qDebug()<< "device: " << device;
+    
     this->copyToUsb(device, jtw);
 }
 

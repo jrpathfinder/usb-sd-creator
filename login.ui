@@ -10,8 +10,33 @@
     <height>300</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>400</width>
+    <height>293</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>400</width>
+    <height>300</height>
+   </size>
+  </property>
+  <property name="focusPolicy">
+   <enum>Qt::StrongFocus</enum>
+  </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Sign in</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="resources.qrc">
+    <normaloff>:/icons/favicon-x2000.svg</normaloff>:/icons/favicon-x2000.svg</iconset>
   </property>
   <property name="styleSheet">
    <string notr="true">background-color: rgb(245, 245, 255);</string>
@@ -104,7 +129,7 @@
     <rect>
      <x>20</x>
      <y>270</y>
-     <width>101</width>
+     <width>131</width>
      <height>16</height>
     </rect>
    </property>
@@ -113,6 +138,9 @@
    </property>
    <property name="openExternalLinks">
     <bool>true</bool>
+   </property>
+   <property name="textInteractionFlags">
+    <set>Qt::TextBrowserInteraction</set>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
@@ -132,6 +160,8 @@
    </property>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

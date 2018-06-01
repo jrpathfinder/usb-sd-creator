@@ -14,14 +14,20 @@ class login : public QDialog
 public:
     explicit login(QWidget *parent = 0);
     ~login();
+    void closeEvent(QCloseEvent *);
 signals:
     void auth(QString u, QString p);
 
 private slots:
     void on_pushButton_clicked();
 
+    void on_label_2_linkActivated(const QString &link);
+
+    void on_pushButton_2_clicked();
+
 public:
     Ui::login *ui;
+
 };
 
 #endif // LOGIN_H

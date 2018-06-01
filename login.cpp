@@ -4,6 +4,7 @@
 #include <QMessageBox>
 #include "creator.h"
 #include <QFontDatabase>
+#include <QDesktopServices>
 
 login::login(QWidget *parent) :
     QDialog(parent),
@@ -15,13 +16,24 @@ login::login(QWidget *parent) :
     QFont roboto(family);
     roboto.setPointSize(16);
     ui->label->setFont(roboto);
+    //this->setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
+
+
+    this->setFixedSize(this->width(),this->height());
+
+
 }
 
 login::~login()
 {
     delete ui;
 }
-
+void login::closeEvent(QCloseEvent* event)
+{
+    qApp->quit();
+    // Q_UNUSED(event);
+    // settings.setValue("window/geometry", saveGeometry());
+}
 void login::on_pushButton_clicked()
 {
     qDebug() << "Login to App before proceed";
@@ -29,7 +41,7 @@ void login::on_pushButton_clicked()
     if(!QString(ui->lineEdit->text()).isEmpty() && !QString(ui->lineEdit_2->text()).isEmpty()){
         emit auth(ui->lineEdit->text(), ui->lineEdit_2->text());
         this->accept();
-        this->close();
+        this->hide();
     }else{
         QMessageBox msgBox(this);
         msgBox.setText(tr("Please provide login/password!"));
@@ -40,4 +52,15 @@ void login::on_pushButton_clicked()
     }
 
 
+}
+
+void login::on_label_2_linkActivated(const QString &link)
+{
+
+}
+
+void login::on_pushButton_2_clicked()
+{
+
+    QDesktopServices::openUrl(QUrl("http://www.example.com/"));
 }

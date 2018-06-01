@@ -155,7 +155,8 @@ private slots:
     void downloadProgressBarText(const QString &text);
     void flashProgressBarText(const QString &text);
     void handleWriteProgress(long long written);
-    void on_login_clicked();
+    void on_pushButton2_clicked();
+
 public slots:
     virtual void authorizeCheck(QString u, QString p);
 };
