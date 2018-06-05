@@ -1300,7 +1300,7 @@ void Creator::handleWriteProgress(long long written)
     averageSpeed->AddValue(speed);
     speed = averageSpeed->AverageValue();
 
-    qDebug() << " speed : " << speed;
+    //qDebug() << " speed : " << speed;
     double remainingTime = (uncompressedImageSize - written) / speed;  // in seconds
     bytesLast = written;
 

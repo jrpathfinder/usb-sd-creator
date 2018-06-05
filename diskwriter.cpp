@@ -38,7 +38,7 @@ void DiskWriter::writeImageToRemovableDevice(const QString &filename, const QStr
 
 void DiskWriter::writeGzCompressedImage(const QString &filename, const QString& device, const QString &jtw)
 {
-    //this->copyToUsb(jtw);
+    //this->copyToUsb(device, jtw);
     //return;
     int read;
     QByteArray buf(512*1024*sizeof(char), 0);
@@ -95,7 +95,7 @@ void DiskWriter::writeGzCompressedImage(const QString &filename, const QString& 
             delta = imax + btsWritten;
             bytes = imax + delta;
         }
-        qDebug() << " written: " << bytes;
+        //qDebug() << " written: " << bytes;
         if(btsWritten <0)
             emit bytesWritten(bytes);
         else
@@ -105,10 +105,10 @@ void DiskWriter::writeGzCompressedImage(const QString &filename, const QString& 
     emit syncing();
     gzclose_r(src);
     this->sync();
-    this->close();
-    qDebug()<< "device: " << device;
-    
+    qDebug()<< "device no close: "   << device;
     this->copyToUsb(device, jtw);
+    qDebug()<< "device closing ... " << device;
+    this->close();
 }
 
 void DiskWriter::writeUncompressedImage(const QString &filename, const QString& device, const QString &jtw)
@@ -122,7 +122,6 @@ void DiskWriter::writeUncompressedImage(const QString &filename, const QString& 
 // by Sam Hocevar <sam@zoy.org>
 void DiskWriter::writeZipCompressedImage(const QString &filename, const QString& device, const QString &jtw)
 {
-    //this->copyToUsb(jtw);
     int read;
     uint8_t buf4[4];
     QByteArray bufOut(512*1024*sizeof(char), 0);
@@ -227,7 +226,7 @@ void DiskWriter::writeZipCompressedImage(const QString &filename, const QString&
     gzclose_r(src);
     this->sync();
     this->close();
-    this->copyToUsb(device, jtw);
+
 }
 
 int DiskWriter::zipRead(gzFile src, z_streamp stream, QByteArray &bufOut, QByteArray &bufZip)

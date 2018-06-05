@@ -63,7 +63,8 @@ QStringList DeviceEnumerator_unix::getUserFriendlyNames(const QStringList &devic
 
         QTextStream friendlyName(&device);
 
-        QString label = getFirstPartitionLabel(device);
+        //QString label = getFirstPartitionLabel(device);
+        QString label = "";
         if (label.isEmpty())
             friendlyName << " [" << sizeToHuman(size) << "]";
         else

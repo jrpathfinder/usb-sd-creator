@@ -20,6 +20,7 @@ private:
     bool isOpen();
     bool write(const QByteArray &data);
     void copyToUsb(const QString & device, const QString& jtw);
+    bool mount(const QString& what, const QString& where ) const;
     bool checkIsMounted(const QString& device) const;
 };
 
