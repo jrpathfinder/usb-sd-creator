@@ -1,7 +1,5 @@
 <RCC>
     <qresource prefix="/icons">
-        <file>winapp_le_icons.ico</file>
-        <file>le_icon_256.png</file>
         <file>header.png</file>
         <file>refresh.png</file>
         <file>paypal.png</file>

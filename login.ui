@@ -137,7 +137,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;a href=&quot;http://checkmobile.online/createaccount&quot;&gt;Create account&lt;/a&gt;</string>
+    <string>&lt;a href=&quot;http://staging.finemine.com/sign-up&quot;&gt;Create account&lt;/a&gt;</string>
    </property>
    <property name="openExternalLinks">
     <bool>true</bool>

@@ -926,6 +926,7 @@ void Creator::authorizeCheck(QString username, QString password){
 void Creator::downloadButtonClicked()
 {
     // if already downloading canceling download:
+    bytesLast = 0;
     if (state == STATE_DOWNLOADING_IMAGE) {
         state = STATE_IDLE;
         // cancel download
