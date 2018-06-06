@@ -17,11 +17,7 @@ login::login(QWidget *parent) :
     roboto.setPointSize(16);
     ui->label->setFont(roboto);
     //this->setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
-
-
     this->setFixedSize(this->width(),this->height());
-
-
 }
 
 login::~login()
@@ -40,8 +36,8 @@ void login::on_pushButton_clicked()
     qDebug() << ui->lineEdit->text() << ui->lineEdit_2->text();
     if(!QString(ui->lineEdit->text()).isEmpty() && !QString(ui->lineEdit_2->text()).isEmpty()){
         emit auth(ui->lineEdit->text(), ui->lineEdit_2->text());
-        this->accept();
-        this->hide();
+        //this->accept();
+        //this->hide();
     }else{
         QMessageBox msgBox(this);
         msgBox.setText(tr("Please provide login/password!"));
@@ -50,17 +46,4 @@ void login::on_pushButton_clicked()
         msgBox.setButtonText(QMessageBox::Ok, tr("OK"));
         msgBox.exec();
     }
-
-
-}
-
-void login::on_label_2_linkActivated(const QString &link)
-{
-
-}
-
-void login::on_pushButton_2_clicked()
-{
-
-    QDesktopServices::openUrl(QUrl("http://www.example.com/"));
 }

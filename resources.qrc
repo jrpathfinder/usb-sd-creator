@@ -13,7 +13,7 @@
         <file>device_load.png</file>
         <file>device_remove.png</file>
         <file>logo_gray.png</file>
-        <file>favicon-x2000.svg</file>
+        <file>favicon-x2000.png</file>
     </qresource>
     <qresource prefix="/qss">
         <file>stylesheet.qss</file>

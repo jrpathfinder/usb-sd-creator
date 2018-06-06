@@ -66,6 +66,16 @@ bool DiskWriter_unix::write(const QByteArray &data)
 
 bool DiskWriter_unix::mount(const QString& what, const QString& where ) const
 {
+    QString path = where;
+
+    QDir dir(path);
+    if(!dir.exists())
+    {
+       qDebug() << "Creating " << path << "directory";
+       dir.mkpath(path);
+    }else{
+       qDebug() << path << " already exists";
+    }
     QProcess cmd;
     cmd.start("mount " + what + " " +where, QIODevice::ReadWrite);
     cmd.waitForStarted();

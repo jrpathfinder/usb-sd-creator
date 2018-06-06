@@ -177,6 +177,7 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
 
     connect(&lform, SIGNAL(close()), this, SLOT(close()));
     lform.show();
+
     ui->fileNameLabel->setVisible(false);
 
 }
@@ -404,6 +405,7 @@ void Creator::removeUSB()
 
 void Creator::downloadProgressBarText(const QString &text = "")
 {
+    qDebug()<<text;
     ui->downloadProgressBar->setFormat("   " + text);
     ui->downloadProgressBar->repaint();
     ui->downloadProgressBar->update();
@@ -735,6 +737,15 @@ QString Creator::getDefaultSaveDir()
 void Creator::handleDownloadError(const QString message)
 {
     qDebug() << "Something went wrong with download:" << message;
+    if(state == STATE_AUTH_REQ){
+        QMessageBox msgBox(this);
+        msgBox.setText(tr("Incorrect username or password!"));
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setButtonText(QMessageBox::Ok, tr("OK"));
+        msgBox.exec();
+        return;
+    }
     downloadProgressBarText(message);
     QMessageBox msgBox(this);
     msgBox.setText(tr("Error while download!"));
@@ -759,6 +770,7 @@ void Creator::handleFinishedDownload(const QByteArray &data)
         parseJson(data);
         Creator::setAuthorized(true);
         ui->stackedWidget->setEnabled(true);
+        lform.hide();
         state = STATE_IDLE;
         break;
 //    case STATE_GET_VERSION:
@@ -1045,7 +1057,7 @@ void Creator::getImageFileNameFromUser()
     else
         ui->writeFlashButton->setEnabled(false);
 
-    // hide selected project and image name
+//   hide selected project and image name
 //    ui->projectSelectBox->blockSignals(true);
 //    ui->imageSelectBox->blockSignals(true);
 
