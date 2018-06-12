@@ -130,6 +130,7 @@ void DiskWriter::writeUncompressedImage(const QString &filename, const QString& 
 // by Sam Hocevar <sam@zoy.org>
 void DiskWriter::writeZipCompressedImage(const QString &filename, const QString& device, const QString &jtw)
 {
+    qDebug() << "JTW" << jtw << " on device" << device;
     int read;
     uint8_t buf4[4];
     QByteArray bufOut(512*1024*sizeof(char), 0);

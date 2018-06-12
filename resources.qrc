@@ -18,9 +18,9 @@
         <file>stylesheet_osx.qss</file>
     </qresource>
     <qresource prefix="/">
-        <file>lang/flag-empty.png</file>
         <file>lang/flag-ru_RU.png</file>
         <file>lang/flag-en_GB.png</file>
+        <file>lang/flag-empty.png</file>
     </qresource>
     <qresource prefix="/font">
         <file>Roboto-Regular.ttf</file>

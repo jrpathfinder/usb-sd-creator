@@ -7,35 +7,11 @@
 #include <QJsonValue>
 #include <QStandardPaths>
 #include <QCollator>
-//#include <QVersionNumber>
 #include <algorithm>
-
-bool compareVersion(const QVariantMap &imageMap1, const QVariantMap &imageMap2)
-{
-    // must compare only version not whole string
-    // name-8.0.2.img.gz < name-8.0.2.1.img.gz
-    // LibreELEC-WeTek_Hub.aarch64-8.0.2.1.img.gz
-    QRegExp regExp = QRegExp(".*-([0-9]+.*)\\.img\\.gz");
-    regExp.indexIn(imageMap1["name"].toString());
-    QStringList versionStr1 = regExp.capturedTexts();
-    regExp.indexIn(imageMap2["name"].toString());
-    QStringList versionStr2 = regExp.capturedTexts();
-
-    if (versionStr1.count() != 2 || versionStr2.count() != 2)
-        return false;   // some error
-
-    //int versionCmp = QVersionNumber::compare(
-    //          QVersionNumber::fromString(versionStr1.at(1)),
-    //          QVersionNumber::fromString(versionStr2.at(1)));
-
-    //if (versionCmp < 0)
-    //    return false;
-    //else
-        return true;
-}
 
 JsonParser::JsonParser(const QByteArray &data, int prs)
 {
+    qDebug() << prs;
     parse(data);
 }
 
@@ -81,7 +57,7 @@ void JsonParser::parse(const QByteArray &data)
  */
 void JsonParser::parseAndSet(const QByteArray &data, const QString label)
 {
-    qDebug() << "parseAndSet data:" << data;
+    qDebug() << "parseAndSet data:" << data << label;
     qDebug() << "parse data:" << data;
     QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
     QJsonObject   jsonObject   = jsonDocument.object();
