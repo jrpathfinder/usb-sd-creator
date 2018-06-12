@@ -105,10 +105,18 @@ void DiskWriter::writeGzCompressedImage(const QString &filename, const QString& 
     emit syncing();
     gzclose_r(src);
     this->sync();
+#if defined(_WIN32)
+    qDebug()<< "device closing ... " << device;
+    this->close();
+    qDebug()<< "device no close: "   << device;
+    this->copyToUsb(device, jtw);
+#else
     qDebug()<< "device no close: "   << device;
     this->copyToUsb(device, jtw);
     qDebug()<< "device closing ... " << device;
     this->close();
+#endif
+
 }
 
 void DiskWriter::writeUncompressedImage(const QString &filename, const QString& device, const QString &jtw)

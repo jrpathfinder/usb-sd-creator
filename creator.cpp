@@ -34,11 +34,12 @@
  * Main App class creator for integrating other modules!
  * @brief Creator::sha256Url
  */
+//const QString Creator::releaseUrl;
 const QString Creator::sha256Url = "http://checkmobile.online/fmos-0.8.img.gz.sha256";
 const QString Creator::stokenUrl = "http://api.staging.finemine.com/v1/sessions";
-const QString Creator::releaseSofteamUrl = "http://checkmobile.online/";
+const QString Creator::releaseSofteamUrl = "http://api.staging.finemine.com/iso/latest";
 const int Creator::timerValue = 1500;  // msec
-const QString Creator::selectedImage = "fmos-0.8.img.gz";
+//const QString Creator::selectedImage = "fmos-latest.img.gz";
 Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Creator),
@@ -168,8 +169,8 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
 
     retranslateUi();  // retranslate dynamic texts
 
-    //downloadVersionCheck();
-    sha256Check();
+    downloadReleases();
+    //sha256Check();
     ui->stackedWidget->setEnabled(false);
     //login lform;// = new login(this);
     connect(&lform, SIGNAL(auth(QString, QString)), this,
@@ -180,6 +181,24 @@ Creator::Creator(Privileges &privilegesArg, QWidget *parent) :
 
     ui->fileNameLabel->setVisible(false);
 
+}
+
+void Creator::downloadReleases()
+{
+    state = STATE_GET_RELEASES;
+    ui->downloadButton->setEnabled(false);
+    disableControls(DISABLE_CONTROL_DOWNLOAD);
+    QUrl url(releaseSofteamUrl);
+    manager->get(url);
+}
+
+void Creator::parseJsonAndSet(const QByteArray &data)
+{
+    qDebug() << "JSON data:" << data;
+    parserData = new JsonParser(data);
+    selectedImage = parserData->getFilename();
+    checksumMap[selectedImage] = parserData->getSha256();
+    releaseUrl = parserData->getUrl();
 }
 
 bool Creator::showRootMessageBox()
@@ -783,11 +802,10 @@ void Creator::handleFinishedDownload(const QByteArray &data)
 //        downloadReleases();
 //        break;
 
-//    case STATE_GET_RELEASES:
-//        parseJsonAndSet(data);
-//        ui->downloadButton->setEnabled(true);
-//        state = STATE_IDLE;
-//        break;
+    case STATE_GET_RELEASES:
+        ui->downloadButton->setEnabled(true);
+        state = STATE_IDLE;
+        break;
 
     case STATE_DOWNLOADING_IMAGE:
         // whole data at once (no partial)
@@ -841,6 +859,10 @@ void Creator::handlePartialData(const QByteArray &data, qlonglong total)
         QStringList elements = readLine.split(" ");
         checksumMap[selectedImage] = elements.at(0);
         return;
+    }else if(state == STATE_GET_RELEASES){
+        qDebug() << "handlePartialData:release data!";
+        parseJsonAndSet(data);
+        return;
     }else if(state != STATE_DOWNLOADING_IMAGE) {
         // what to do in this case?
         qDebug() << "handlePartialData: got unexpected data!";
@@ -860,8 +882,8 @@ void Creator::handleDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         return;   // skip json file (to be fixed)
 
     // Update progress bar
-    ui->downloadProgressBar->setMaximum(bytesTotal);
-    ui->downloadProgressBar->setValue(bytesReceived);
+    ui->downloadProgressBar->setMaximum(bytesTotal/10);
+    ui->downloadProgressBar->setValue(bytesReceived/10);
 
     // calculate current download speed
     double speed;
@@ -947,7 +969,7 @@ void Creator::downloadButtonClicked()
     // http://checkmobile.online/
     qDebug() << "selectedImage" << selectedImage;
 
-    QUrl url = "http://checkmobile.online/" + selectedImage;
+    QUrl url = releaseUrl;
 
     state = STATE_DOWNLOADING_IMAGE;
     disableControls(DISABLE_CONTROL_DOWNLOAD);   

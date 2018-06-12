@@ -81,7 +81,8 @@ private:
         STATE_DOWNLOADING_IMAGE,
         STATE_WRITING_IMAGE,
         STATE_AUTH_REQ,
-        STATE_DOWNLOADING_CHECKSUM
+        STATE_DOWNLOADING_CHECKSUM,
+        STATE_GET_RELEASES
     } state;
     enum {
         STACK_WIDGET_MAIN = 0,
@@ -97,7 +98,7 @@ private:
     QString downloadUrl;
     QString downloadFileSize;
     QString checksum;
-    static const QString selectedImage;
+    QString selectedImage;
     QMap<QString, QString> checksumMap;
     DiskWriter *diskWriter;
     QThread* diskWriterThread;
@@ -105,6 +106,7 @@ private:
     static const int timerValue;
     static const QString versionUrl;
     static const QString stokenUrl;
+    QString releaseUrl;
     static const QString releaseSofteamUrl;
     static const QString sha256Url;
     JsonParser *parserData;
@@ -138,8 +140,9 @@ private slots:
     void handlePartialData(const QByteArray& data, qlonglong total);
     void handleDownloadError(const QString);
     void sha256Check();
-
+    void downloadReleases();
     void parseJson(const QByteArray &data);
+    void parseJsonAndSet(const QByteArray &data);
     void refreshRemovablesList();
     void downloadButtonClicked();
     void getImageFileNameFromUser();

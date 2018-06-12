@@ -45,6 +45,7 @@ QNetworkReply* DownloadManager::get(const QUrl &url)
     req.setRawHeader("User-Agent", "Wget/1.14 (linux-gnu)");
     req.setRawHeader("Connection", "keep-alive");
     req.setRawHeader("Keep-Alive","600000");
+    //req.setRawHeader("Content-Type","application/json; charset=utf-8");
     qDebug() << "Getting" << url;
 
     latestReply = manager->get(req);

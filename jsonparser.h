@@ -50,10 +50,16 @@ public:
     void parse(const QByteArray &data);
     QList<JsonData> getJsonData() const;
     QString getJTW() const;
+    QString getUrl() const;
+    QString getSha256() const;
+    QString getFilename() const;
 
 private:
     QList<JsonData> dataList;
     QString jtw;
+    QString url;
+    QString sha256;
+    QString filename;
 };
 
 #endif // JSONPARSER_H

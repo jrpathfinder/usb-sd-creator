@@ -73,97 +73,41 @@ void JsonParser::parse(const QByteArray &data)
         }
     }
 }
+/**
+ * Parsing JSON Data from reply of QByteArray
+ * @brief JsonParser::parseAndSet
+ * @param data
+ * @param label
+ */
 void JsonParser::parseAndSet(const QByteArray &data, const QString label)
 {
-    //qDebug() << "parseAndSet data:" << data;
+    qDebug() << "parseAndSet data:" << data;
+    qDebug() << "parse data:" << data;
     QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
-    QJsonObject jsonObject = jsonDocument.object();
-
-    // get project versions (7.0, 8.0, ...)
-    for (QJsonObject::Iterator itProjectVersions  = jsonObject.begin();
-                               itProjectVersions != jsonObject.end();
-                               itProjectVersions++)
+    QJsonObject   jsonObject   = jsonDocument.object();
+    for (QJsonObject::Iterator item  = jsonObject.begin();
+                               item != jsonObject.end();
+                               item++)
     {
-        QString project = itProjectVersions.key();
-        QString projectUrl = itProjectVersions.value().toObject()["url"].toString();
-
-        // get projects (imx6, Wetek, ...)
-        QJsonObject val = itProjectVersions.value().toObject()["project"].toObject();
-        for (QJsonObject::Iterator itProjects  = val.begin();
-                                   itProjects != val.end();
-                                   itProjects++)
+        QJsonObject userObject = item.value().toObject();
+        for (QJsonObject::Iterator its  = userObject.begin();
+                                   its != userObject.end();
+                                   its++)
         {
-            QString projectId = itProjects.key();
-            QString projectName = itProjects.value().toObject()["displayName"].toString();
-
-            // skip Virtual
-            if (projectId == "Virtual.x86_64")
-                continue;
-
-            if (label != "")
-                projectName = projectName + " - " + label;
-
-            QVariantMap projectData;
-            projectData.insert("name", projectName);
-            projectData.insert("id", projectId);
-            projectData.insert("url", projectUrl);
-
-            // get releases
-            QJsonObject val1 = itProjects.value().toObject();
-            for (QJsonObject::Iterator itReleasesNode  = val1.begin();
-                                       itReleasesNode != val1.end();
-                                       itReleasesNode++)
-            {
-                QList<QVariantMap> images;
-                JsonData projectCheck;
-                projectCheck.name = projectName;
-                int projectIx = dataList.indexOf(projectCheck);
-
-                QJsonObject val2 = itReleasesNode.value().toObject();
-                for (QJsonObject::Iterator itReleases  = val2.begin();
-                                           itReleases != val2.end();
-                                           itReleases++)
-                {
-                    QJsonObject projectReleasesList = itReleases.value().toObject();
-                    for (QJsonObject::Iterator itImageFile  = projectReleasesList.begin();
-                                               itImageFile != projectReleasesList.end();
-                                               itImageFile++)
-                    {
-                        QString imageName = itImageFile.value().toObject().toVariantMap()["name"].toString();
-
-                        if (! imageName.endsWith(".img.gz"))
-                            continue;   // we want to see only image files
-
-                        if (projectIx < 0) {
-                            // new project
-                            images.append(itImageFile.value().toObject().toVariantMap());
-                        } else {
-                            // old project
-                            dataList[projectIx].images.append(itImageFile.value().toObject().toVariantMap());
-                        }
-                    }
-                }
-
-
-                if (projectIx < 0) {
-                  // new project
-                  JsonData projectData(projectName, projectId, projectUrl, images);
-                  dataList.append(projectData);
-                }
+            qDebug() << its.key();
+            if(its.key() == "url"){
+                qDebug() << "URL" << its.value().toString();
+                url    = its.value().toString();
+            }else if(its.key() == "sha256"){
+                qDebug() << "sha256" << its.value().toString();
+                sha256 = its.value().toString();
+            }else if(its.key() == "name"){
+                qDebug() << "file name" << its.value().toString();
+                filename = its.value().toString();
             }
         }
     }
 
-    QCollator collator;
-    collator.setNumericMode(true);
-    collator.setCaseSensitivity(Qt::CaseSensitive);
-
-    std::sort(dataList.begin(), dataList.end(),
-              [&collator](const JsonData &proj1, const JsonData &proj2)
-         {return collator.compare(proj1.name, proj2.name) > 0;});
-
-    for (int ix = 0; ix < dataList.size(); ix++)
-        std::sort(dataList[ix].images.begin(), dataList[ix].images.end(), compareVersion);
 }
 
 QList<JsonData> JsonParser::getJsonData() const
@@ -174,4 +118,16 @@ QList<JsonData> JsonParser::getJsonData() const
 QString JsonParser::getJTW() const
 {
     return jtw;
+}
+QString JsonParser::getUrl() const
+{
+    return url;
+}
+QString JsonParser::getSha256() const
+{
+    return sha256;
+}
+QString JsonParser::getFilename() const
+{
+    return filename;
 }

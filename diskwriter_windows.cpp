@@ -1,5 +1,4 @@
 #include "diskwriter_windows.h"
-
 #include <QDebug>
 #include <QMessageBox>
 #include <QFile>
@@ -235,7 +234,7 @@ void DiskWriter_windows::copyToUsb(const QString& device, const QString& jtw){
     // Where to copy security token
     QString securityTokenLocation= "/fmos_token.txt";
     QFile srcFile;
-    srcFile.setFileName("token.txt");
+    srcFile.setFileName("tmp_token.txt");
     if(!srcFile.open(QFile::WriteOnly | QFile::Text)) {
         qDebug() <<"Could not open for writing";
     }else{

@@ -19,35 +19,8 @@
     </qresource>
     <qresource prefix="/">
         <file>lang/flag-empty.png</file>
-        <file>lang/flag-ast_ES.png</file>
-        <file>lang/flag-bg_BG.png</file>
-        <file>lang/flag-cs_CZ.png</file>
-        <file>lang/flag-da_DK.png</file>
-        <file>lang/flag-de_DE.png</file>
-        <file>lang/flag-el_GR.png</file>
-        <file>lang/flag-en_GB.png</file>
-        <file>lang/flag-es_ES.png</file>
-        <file>lang/flag-fa_IR.png</file>
-        <file>lang/flag-fi_FI.png</file>
-        <file>lang/flag-fr_FR.png</file>
-        <file>lang/flag-he_IL.png</file>
-        <file>lang/flag-hr_HR.png</file>
-        <file>lang/flag-hu_HU.png</file>
-        <file>lang/flag-it_IT.png</file>
-        <file>lang/flag-lt_LT.png</file>
-        <file>lang/flag-nl_NL.png</file>
-        <file>lang/flag-no_NO.png</file>
-        <file>lang/flag-pl_PL.png</file>
-        <file>lang/flag-pt_BR.png</file>
-        <file>lang/flag-pt_PT.png</file>
         <file>lang/flag-ru_RU.png</file>
-        <file>lang/flag-sk_SK.png</file>
-        <file>lang/flag-sl_SI.png</file>
-        <file>lang/flag-sr_RS.png</file>
-        <file>lang/flag-sv_SE.png</file>
-        <file>lang/flag-tr_TR.png</file>
-        <file>lang/flag-uk_UA.png</file>
-        <file>lang/flag-zh_CN.png</file>
+        <file>lang/flag-en_GB.png</file>
     </qresource>
     <qresource prefix="/font">
         <file>Roboto-Regular.ttf</file>
